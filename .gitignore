@@ -1,0 +1,11 @@
+analysis/
+backups/
+reference/
+*.zip
+
+assets/candidates/
+assets/colorways/archive/
+assets/colorways/devil-eye-blue.png
+assets/colorways/devil-eye-green.png
+assets/film/source-wan3-480p.mp4
+assets/film/start-frame-1920x1080.png

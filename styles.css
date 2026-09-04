@@ -653,6 +653,16 @@ button {
   text-decoration: none;
 }
 
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: #fff;
+}
+
 @media (max-width: 60rem) {
   .section-heading {
     grid-template-columns: 1fr;

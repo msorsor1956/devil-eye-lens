@@ -8,7 +8,10 @@
     <title>Black Automotive LED Devil-Eye Projector</title>
     <script>document.documentElement.classList.remove("no-js");</script>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="product.css">
     <script src="scroll-film.js" defer></script>
+    <script src="checkout-config.js" defer></script>
+    <script src="product.js" defer></script>
   </head>
   <body>
     <main>
@@ -61,46 +64,65 @@
         </div>
       </section>
 
-      <section class="series-section" id="series" aria-labelledby="series-title">
+      <section class="series-section product-commerce" id="series" aria-labelledby="series-title">
         <header class="section-heading">
           <p class="eyebrow">05 / SERIES</p>
           <h1 id="series-title">Choose your<br><span>gaze.</span></h1>
-          <p class="section-intro">One projector. Three calibrated color signatures.</p>
+          <p class="section-intro">Choose the eye, confirm your 12V fit, and check out without leaving the experience.</p>
         </header>
 
-        <div class="colorway-grid" aria-label="Available projector colors">
-          <figure class="colorway colorway--blue">
-            <div class="colorway__visual">
-              <img src="assets/sections/devil-eye-blue.webp" alt="Black devil-eye projector with an electric blue iris">
+        <div class="product-hero product-hero--inline">
+          <div class="product-gallery" aria-label="Product gallery">
+            <div class="product-gallery__stage">
+              <img id="product-main-image" src="assets/product/installed-blue.webp" alt="Blue Devil's Eye projector installed with remote control">
+              <span class="gallery-badge">12V / UNIVERSAL</span>
             </div>
-            <figcaption>
-              <span class="colorway__number">01</span>
-              <span class="colorway__name">Electric blue</span>
-              <span class="colorway__signal">BLUE / IRIS</span>
-            </figcaption>
-          </figure>
+            <div class="product-thumbs" role="list" aria-label="Choose product image">
+              <button class="is-selected" type="button" data-image="assets/product/installed-blue.webp" data-alt="Blue Devil's Eye projector installed with remote control" aria-label="Installed view"><img src="assets/product/installed-blue.webp" alt=""></button>
+              <button type="button" data-image="assets/product/twin-kit.webp" data-alt="Twin Devil's Eye projector kit with 100 centimeter cable" aria-label="Twin kit"><img src="assets/product/twin-kit.webp" alt=""></button>
+              <button type="button" data-image="assets/product/single-kit.webp" data-alt="Single Devil's Eye projector kit with 55 centimeter cable" aria-label="Single kit"><img src="assets/product/single-kit.webp" alt=""></button>
+              <button type="button" data-image="assets/product/lighting-effects.webp" data-alt="Available red, green, blue and purple lighting effects" aria-label="Lighting effects"><img src="assets/product/lighting-effects.webp" alt=""></button>
+            </div>
+          </div>
 
-          <figure class="colorway colorway--green">
-            <div class="colorway__visual">
-              <img src="assets/sections/devil-eye-green.webp" alt="Black devil-eye projector with an acid green iris">
+          <div class="purchase-panel">
+            <p class="eyebrow">MAIDSAIL / DEVIL'S EYE</p>
+            <h2>Own the<br><span>night.</span></h2>
+            <p class="product-lead">A remote-controlled LED projector for a distinctive automotive gaze.</p>
+            <div class="quick-facts" aria-label="Key product facts">
+              <span><strong>12V</strong> input</span>
+              <span><strong>10W</strong> rated</span>
+              <span><strong>1 year</strong> warranty</span>
             </div>
-            <figcaption>
-              <span class="colorway__number">02</span>
-              <span class="colorway__name">Acid green</span>
-              <span class="colorway__signal">GREEN / IRIS</span>
-            </figcaption>
-          </figure>
+            <fieldset class="variant-picker">
+              <legend>Choose eye color <output id="selected-color">Electric blue</output></legend>
+              <div class="swatches">
+                <button class="swatch swatch--blue is-selected" type="button" data-color="Electric blue" aria-label="Electric blue" aria-pressed="true"></button>
+                <button class="swatch swatch--green" type="button" data-color="Acid green" aria-label="Acid green" aria-pressed="false"></button>
+                <button class="swatch swatch--purple" type="button" data-color="Ultraviolet purple" aria-label="Ultraviolet purple" aria-pressed="false"></button>
+                <button class="swatch swatch--red" type="button" data-color="Signal red" aria-label="Signal red" aria-pressed="false"></button>
+              </div>
+            </fieldset>
+            <div class="kit-picker">
+              <label for="kit">Kit</label>
+              <select id="kit">
+                <option value="Single projector / 55 cm cable">1 in 1 — 55 cm cable</option>
+                <option value="Twin projector / 100 cm cable">2 in 1 — 100 cm cable</option>
+              </select>
+            </div>
+            <div class="purchase-row">
+              <p class="product-price" id="product-price">Price confirmed at checkout</p>
+              <label class="quantity">Qty <input id="quantity" type="number" min="1" max="10" value="1" inputmode="numeric"></label>
+            </div>
+            <button class="product-buy" type="button" data-open-checkout>Proceed to checkout <span>→</span></button>
+            <p class="purchase-note">New · Universal fit · Remote included · Secure checkout</p>
+          </div>
+        </div>
 
-          <figure class="colorway colorway--purple">
-            <div class="colorway__visual">
-              <img src="assets/sections/devil-eye-purple.webp" alt="Black devil-eye projector with an ultraviolet purple iris">
-            </div>
-            <figcaption>
-              <span class="colorway__number">03</span>
-              <span class="colorway__name">Ultraviolet</span>
-              <span class="colorway__signal">PURPLE / IRIS</span>
-            </figcaption>
-          </figure>
+        <div class="driver-strip" aria-label="Purchase steps">
+          <p><span>01</span> Select a color</p>
+          <p><span>02</span> Confirm 12V fit</p>
+          <p><span>03</span> Install and switch</p>
         </div>
       </section>
 
@@ -140,7 +162,7 @@
           <h2 id="fitment-title">Make the first<br><span>look count.</span></h2>
           <p>Choose a signature. Check the housing. Build the stare.</p>
           <div class="fitment-actions">
-            <a class="button button--primary" href="#series">View the colors</a>
+            <a class="button button--primary" href="#series">Shop the projector</a>
             <a class="button button--quiet" href="#construction">Check dimensions</a>
           </div>
         </div>
@@ -150,7 +172,29 @@
     <footer class="site-footer">
       <a class="footer-mark" href="#projector-story" aria-label="Return to the hero">DEVIL / EYE</a>
       <p>Black automotive LED projector</p>
-      <p>Optic engineered for presence.</p>
+      <p><a class="footer-link" href="#series">Shop Devil's Eye</a></p>
     </footer>
+
+    <dialog class="checkout-dialog" id="checkout-dialog" aria-labelledby="checkout-title">
+      <form method="dialog" class="checkout-shell">
+        <button class="checkout-close" value="cancel" aria-label="Close checkout">×</button>
+        <div class="checkout-heading">
+          <p class="eyebrow">SECURE CHECKOUT</p>
+          <h2 id="checkout-title">Your Devil's Eye</h2>
+        </div>
+        <div class="order-summary">
+          <img src="assets/sections/devil-eye-blue.webp" alt="" id="checkout-image">
+          <div><strong id="checkout-variant">Electric blue</strong><span id="checkout-kit">1 in 1 — 55 cm cable</span><span id="checkout-quantity">Quantity 1</span></div>
+          <strong id="checkout-price">Price confirmed at checkout</strong>
+        </div>
+        <div class="payment-methods">
+          <a class="pay-button pay-button--stripe" id="stripe-checkout" href="#" aria-disabled="true">Pay securely with Stripe <span>→</span></a>
+          <a class="pay-button pay-button--cash" id="cashapp-checkout" href="#" aria-disabled="true">Pay with Cash App <span>↗</span></a>
+        </div>
+        <p class="checkout-status" id="checkout-status" role="status">Payment links are being configured. Your selection has been saved.</p>
+        <p class="checkout-legal">Payment opens in the provider's secure checkout. Never enter card information directly on this page.</p>
+      </form>
+    </dialog>
+    <button class="mobile-buy" type="button" data-open-checkout><span>Devil's Eye</span><strong>Buy now →</strong></button>
   </body>
 </html>

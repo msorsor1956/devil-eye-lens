@@ -1,0 +1,54 @@
+name: Static storefront checks
+
+on:
+  push:
+    branches: [main, 'upgrade/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check JavaScript syntax
+        run: |
+          node --check product.js
+          node --check privacy.js
+          node --check checkout-config.js
+      - name: Build storefront and validate nginx configuration
+        run: docker build --pull -t devil-eye-check .
+      - name: Verify server responses and security headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --name storefront -p 127.0.0.1:8080:80 devil-eye-check
+          trap 'docker logs storefront; docker rm -f storefront' EXIT
+          curl --retry 10 --retry-delay 1 --retry-connrefused --fail --silent http://127.0.0.1:8080/ >/dev/null
+          python3 - <<'PY'
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError
+          base = 'http://127.0.0.1:8080'
+          cases = [('/', 'GET', 200), ('/privacy.html', 'GET', 200),
+                   ('/terms.html', 'GET', 200), ('/shipping-returns.html', 'GET', 200),
+                   ('/robots.txt', 'GET', 200), ('/sitemap.xml', 'GET', 200),
+                   ('/not-a-page', 'GET', 404), ('/.env', 'GET', 404),
+                   ('/', 'POST', 405)]
+          for path, method, expected in cases:
+              try:
+                  response = urlopen(Request(base + path, method=method), timeout=5)
+              except HTTPError as error:
+                  response = error
+              assert response.status == expected, (path, method, response.status)
+              assert response.headers['X-Content-Type-Options'] == 'nosniff', path
+              assert response.headers['X-Frame-Options'] == 'DENY', path
+              assert "frame-ancestors 'none'" in response.headers['Content-Security-Policy'], path
+          print('Public pages, missing paths, disallowed methods and headers verified.')
+          PY

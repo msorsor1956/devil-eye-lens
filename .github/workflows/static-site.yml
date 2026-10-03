@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
           docker run --detach --name storefront -p 127.0.0.1:8080:80 devil-eye-check
           trap 'docker logs storefront; docker rm -f storefront' EXIT
-          curl --retry 10 --retry-delay 1 --retry-connrefused --fail --silent http://127.0.0.1:8080/ >/dev/null
+          curl --retry 10 --retry-delay 1 --retry-all-errors --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8080/ >/dev/null
           python3 - <<'PY'
           from urllib.request import Request, urlopen
           from urllib.error import HTTPError
@@ -39,6 +39,7 @@ jobs:
           cases = [('/', 'GET', 200), ('/privacy.html', 'GET', 200),
                    ('/terms.html', 'GET', 200), ('/shipping-returns.html', 'GET', 200),
                    ('/robots.txt', 'GET', 200), ('/sitemap.xml', 'GET', 200),
+                   ('/assets/sections/devil-eyes-favicon.svg', 'GET', 200),
                    ('/not-a-page', 'GET', 404), ('/.env', 'GET', 404),
                    ('/', 'POST', 405)]
           for path, method, expected in cases:

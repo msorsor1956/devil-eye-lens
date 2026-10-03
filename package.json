@@ -1,0 +1,27 @@
+{
+  "name": "night-eyes",
+  "version": "1.0.0",
+  "description": "Night Eyes static storefront and on-demand Three.js product preview",
+  "scripts": {
+    "build": "esbuild src/showroom.js --bundle --minify --format=iife --outfile=assets/scene/showroom.js",
+    "check": "node --check product.js && node --check privacy.js && node --check assets/scene/showroom.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/msorsor1956/devil-eye-lens.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/msorsor1956/devil-eye-lens/issues"
+  },
+  "homepage": "https://github.com/msorsor1956/devil-eye-lens#readme",
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "private": true
+}

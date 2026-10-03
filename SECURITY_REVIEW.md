@@ -12,6 +12,7 @@ Reviewed 2026-10-03. Scope: the static website, its container configuration and 
 - The static server accepts GET and HEAD only, caps request bodies and uses finite connection timeouts. This policy must be deliberately revised when authenticated APIs or Stripe webhooks are implemented.
 - Application access logs omit visitor IP addresses, query strings, user-agent strings and referrers. Error logs may still contain request/client details. Railway's own edge logging is independent of this configuration.
 - The Dockerfile copies public assets explicitly, rather than copying the repository, and runs `nginx -t` as a required image-build gate.
+- Replaced unrelated Jekyll, npm publishing and placeholder SLSA workflows with a static-site check that builds the container, checks script syntax, and tests HTTP response codes and security headers. Its checkout action is pinned to the verified v7.0.1 commit, credentials are not persisted, and its GitHub token has read-only contents permissions. No release publishing or write-token job remains.
 
 The existing browser checkout configuration contains public payment links only, not secret API keys. Payment destinations are restricted in JavaScript to HTTPS `buy.stripe.com` and `cash.app`; links use `noopener noreferrer`. Kit selections are treated as display preferences, never authoritative price or payment data. Review and fulfillment of orders require a backend.
 

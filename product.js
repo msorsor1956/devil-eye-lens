@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  document.documentElement.classList.remove('no-js');
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
   const config = window.DEVIL_EYE_CHECKOUT || {};
@@ -13,7 +14,7 @@
   let selectedColor = 'Electric blue', preview = 'blue';
   const validQuantity = () => Number.isInteger(Number(quantity.value)) && Number(quantity.value) >= 1 && Number(quantity.value) <= 10;
   function save() {
-    if (!validQuantity()) return false;
+    if (!$('#remember-kit').checked || !validQuantity()) return false;
     try { localStorage.setItem('devil-eye-kit', JSON.stringify({color:selectedColor, kit:kit.value, quantity:Number(quantity.value)})); return true; }
     catch { return false; }
   }
@@ -37,7 +38,7 @@
   }
   try {
     const data=JSON.parse(localStorage.getItem('devil-eye-kit')||'null');
-    if(data && colors[data.color]) {selectColor(data.color);if([...kit.options].some(o=>o.value===data.kit))kit.value=data.kit;if(Number.isInteger(data.quantity)&&data.quantity>=1&&data.quantity<=10)quantity.value=data.quantity;}
+    if(data && colors[data.color]) {$('#remember-kit').checked=true;selectColor(data.color);if([...kit.options].some(o=>o.value===data.kit))kit.value=data.kit;if(Number.isInteger(data.quantity)&&data.quantity>=1&&data.quantity<=10)quantity.value=data.quantity;}
   } catch { /* Storage is optional; browsing remains available. */ }
   $$('[data-image]').forEach(b=>{
     b.setAttribute('aria-pressed',String(b.classList.contains('is-selected')));
@@ -45,12 +46,13 @@
   });
   $$('[data-color]').forEach(b=>b.addEventListener('click',()=>{selectColor(b.dataset.color);save();}));
   $$('[data-preview]').forEach(b=>b.addEventListener('click',()=>{const color=Object.keys(colors).find(c=>colors[c].key===b.dataset.preview);selectColor(color);save();}));
+  $('#remember-kit').addEventListener('change',()=>{if($('#remember-kit').checked)save();else try{localStorage.removeItem('devil-eye-kit');}catch{}});
   [kit,quantity].forEach(el=>el.addEventListener('change',save));
   quantity.addEventListener('input',()=>quantity.setCustomValidity(''));
   let enabled=0;
   [['#stripe-checkout',config.stripePaymentLink,'buy.stripe.com'],['#cashapp-checkout',config.cashAppUrl,'cash.app']].forEach(([id,url,host])=>{
     const a=$(id);let valid=false;
-    try {const u=new URL(url);valid=u.protocol==='https:'&&u.hostname===host;}catch{}
+    try {const u=new URL(url);valid=u.protocol==='https:'&&u.hostname===host&&!u.username&&!u.password&&config.allowUnlinkedCheckout===true;}catch{}
     if(valid){a.href=url;a.removeAttribute('aria-disabled');a.target='_blank';a.rel='noopener noreferrer';enabled++;}
     else {a.removeAttribute('href');a.setAttribute('aria-disabled','true');a.setAttribute('role','link');}
   });
@@ -60,7 +62,7 @@
   $$('[data-open-checkout]').forEach(b=>b.addEventListener('click',()=>{
     quantity.setCustomValidity(validQuantity()?'':'Enter a whole number from 1 to 10.');if(!quantity.reportValidity())return;
     const saved=save();$('#checkout-variant').textContent=selectedColor;$('#checkout-kit').textContent=kit.options[kit.selectedIndex].text;$('#checkout-quantity').textContent=`Quantity ${quantity.value}`;
-    $('#checkout-status').textContent=enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':'Your selection remains on this page; browser storage is unavailable.'}`;
+    $('#checkout-status').textContent=enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':$('#remember-kit').checked?'Your selection remains on this page; browser storage is unavailable.':'Your selection is not saved on this device.'}`;
     dialog.showModal();document.body.classList.add('dialog-open');
   }));
   $$('dialog').forEach(d=>{d.addEventListener('close',()=>document.body.classList.remove('dialog-open'));d.addEventListener('click',e=>{const r=d.getBoundingClientRect();if(e.target===d&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))d.close();});});

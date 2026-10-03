@@ -11,3 +11,5 @@ assets/film/source-wan3-480p.mp4
 assets/film/start-frame-1920x1080.png
 
 node_modules/
+test-results/
+playwright-report/

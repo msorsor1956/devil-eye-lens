@@ -4,7 +4,7 @@ test('responsive layout and kit selection',async({page})=>{
  for(const width of [375,390,768,1024,1440]){
   await page.setViewportSize({width,height:900});await page.goto('http://127.0.0.1:8080');
   await expect(page.locator('html')).not.toHaveClass('no-js');
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+  const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].map(e=>({tag:e.tagName,cls:e.className,left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right})).filter(e=>e.right>innerWidth+1||e.left < -1)}));expect(layout.scroll,JSON.stringify(layout)).toBeLessThanOrEqual(width);
  }
  await page.getByRole('button',{name:'Green',exact:true}).click();await expect(page.locator('#selected-color')).toHaveText('Acid green');
  await page.locator('#quantity').fill('2');await page.locator('[data-open-checkout]').click();await expect(page.locator('#checkout-dialog')).toBeVisible();await expect(page.locator('#checkout-quantity')).toHaveText('Quantity 2');await expect(page.locator('#stripe-checkout')).toHaveAttribute('aria-disabled','true');await page.keyboard.press('Escape');

@@ -58,4 +58,4 @@ load?.addEventListener('click',()=>{try{load.disabled=true;status.textContent='L
 for(const b of document.querySelectorAll('[data-turn]'))b.addEventListener('click',()=>sceneState?.rotate(Number(b.dataset.turn)));
 document.querySelector('#reset-3d')?.addEventListener('click',()=>sceneState?.reset());
 for(const b of document.querySelectorAll('[data-preview], [data-color]'))b.addEventListener('click',()=>{const key=b.dataset.preview||({'Electric blue':'blue','Acid green':'green','Ultraviolet purple':'purple','Signal red':'red'}[b.dataset.color]);sceneState?.color(key);});
-window.addEventListener('pagehide',()=>sceneState?.dispose(),{once:true});
+window.addEventListener('pagehide',event=>{if(!event.persisted)sceneState?.dispose();});

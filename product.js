@@ -56,8 +56,16 @@
     if(valid){a.href=url;a.removeAttribute('aria-disabled');a.target='_blank';a.rel='noopener noreferrer';enabled++;}
     else {a.removeAttribute('href');a.setAttribute('aria-disabled','true');a.setAttribute('role','link');}
   });
-  const price=enabled && config.price && config.price!=='Price confirmed at checkout' ? config.price : enabled ? 'Confirm price at checkout' : 'Pricing coming soon';
-  $$('#product-price, #checkout-price').forEach(n=>n.textContent=price);
+  const money=cents=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100);
+  function updatePrice(){
+    const unit=config.prices?.[({'Single projector / 55 cm cable':'single','Twin projector / 100 cm cable':'twin'})[kit.value]];
+    if(!Number.isInteger(unit))return;
+    $('#product-price').textContent=money(unit)+' USD + '+money(config.shipping)+' shipping';
+    $('#checkout-price').textContent=money(unit*(validQuantity()?Number(quantity.value):1)+config.shipping)+' before tax';
+  }
+  [kit,quantity].forEach(el=>el.addEventListener('change',updatePrice));
+  quantity.addEventListener('input',updatePrice);
+  updatePrice();
   if(enabled){$('#availability-note').textContent='Review the order details and total with the payment provider before paying.';$('#ordering-answer').textContent='A payment option is available. Verify the color, kit, quantity, shipping and return terms with the payment provider before paying.';}
   $$('[data-open-checkout]').forEach(b=>b.addEventListener('click',()=>{
     quantity.setCustomValidity(validQuantity()?'':'Enter a whole number from 1 to 10.');if(!quantity.reportValidity())return;

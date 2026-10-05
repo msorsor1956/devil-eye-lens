@@ -22,7 +22,8 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "lucide-static": "1.52.0"
   },
   "private": true
 }

@@ -30,17 +30,31 @@ function createScene(){
  model.rotation.set(-.12,-.35,0);
  renderer.domElement.setAttribute('aria-label','Interactive illustrative 3D projector. Use the rotation buttons below.');renderer.domElement.setAttribute('role','img');
  host.append(renderer.domElement);
+ let frame=0,clock=0,lastTime=0,moving=host.dataset.moving==='true',disposed=false;
  const render=()=>renderer.render(scene,camera);
+ function tick(time){
+  frame=0;if(!moving||disposed)return;
+  const dt=lastTime?Math.min((time-lastTime)/1000,.05):0;lastTime=time;clock+=dt;
+  model.rotation.y+=dt*.23;
+  model.position.y=Math.sin(clock*.8)*.09;
+  model.rotation.x=-.12+Math.sin(clock*.45)*.06;
+  edge.position.x=3+Math.sin(clock*.6)*2;
+  render();frame=requestAnimationFrame(tick);
+ }
+ function setMoving(value){moving=value;cancelAnimationFrame(frame);frame=0;lastTime=0;if(moving&&!disposed)frame=requestAnimationFrame(tick);}
+ function motionChange(event){setMoving(event.detail.moving);}
+ host.addEventListener('showroom-motion',motionChange);
+ setMoving(moving);
  const resize=new ResizeObserver(()=>{const r=host.getBoundingClientRect();renderer.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();render();});resize.observe(host);
  let drag=null;
- renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;drag=e.clientX;renderer.domElement.setPointerCapture(e.pointerId);});
+ renderer.domElement.addEventListener('pointerdown',e=>{drag=e.clientX;setMoving(false);renderer.domElement.setPointerCapture(e.pointerId);});
  renderer.domElement.addEventListener('pointermove',e=>{if(drag===null)return;model.rotation.y+=(e.clientX-drag)*.008;drag=e.clientX;render();});
- for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>drag=null);
- renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();host.classList.remove('scene-ready');controls.hidden=true;status.textContent='3D paused. Product photo is shown.';});
+ for(const event of ['pointerup','pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,()=>{drag=null;setMoving(host.dataset.moving==='true');});
+ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();setMoving(false);host.classList.remove('scene-ready');controls.hidden=true;status.textContent='3D paused. Product photo is shown.';});
  host.classList.add('scene-ready');controls.hidden=false;render();
- return {rotate:d=>{model.rotation.y+=d;render();},reset:()=>{model.rotation.set(-.12,-.35,0);render();},color:key=>{lightMat.color.setHex(colors[key]||colors.blue);render();},dispose:()=>{resize.disconnect();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});}};
+ return {rotate:d=>{model.rotation.y+=d;render();},reset:()=>{clock=0;model.position.y=0;model.rotation.set(-.12,-.35,0);render();},color:key=>{lightMat.color.setHex(colors[key]||colors.blue);render();},dispose:()=>{disposed=true;cancelAnimationFrame(frame);host.removeEventListener('showroom-motion',motionChange);resize.disconnect();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});}};
 }
-load?.addEventListener('click',()=>{try{load.disabled=true;status.textContent='Loading interactive view…';sceneState=createScene();sceneState.color(document.querySelector('[data-preview][aria-pressed="true"]')?.dataset.preview);load.hidden=true;status.textContent='Drag to rotate · On touch, use the arrows below';}catch{load.hidden=true;controls.hidden=true;host.querySelector('canvas')?.remove();status.textContent='3D is unavailable on this device. Product photo is shown.';}});
+load?.addEventListener('click',()=>{try{load.disabled=true;status.textContent='Loading interactive view…';sceneState=createScene();sceneState.color(document.querySelector('[data-preview][aria-pressed="true"]')?.dataset.preview);load.hidden=true;status.textContent='Drag to explore · Rotate, reset, or pause motion';}catch{load.hidden=true;controls.hidden=true;host.querySelector('canvas')?.remove();status.textContent='3D is unavailable on this device. Animated product photo is shown.';}});
 for(const b of document.querySelectorAll('[data-turn]'))b.addEventListener('click',()=>sceneState?.rotate(Number(b.dataset.turn)));
 document.querySelector('#reset-3d')?.addEventListener('click',()=>sceneState?.reset());
 for(const b of document.querySelectorAll('[data-preview], [data-color]'))b.addEventListener('click',()=>{const key=b.dataset.preview||({'Electric blue':'blue','Acid green':'green','Ultraviolet purple':'purple','Signal red':'red'}[b.dataset.color]);sceneState?.color(key);});

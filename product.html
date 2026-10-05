@@ -28,11 +28,12 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="product.css">
     <link rel="stylesheet" href="premium.css?v=20261003">
-    <link rel="stylesheet" href="spatial.css?v=20261003b">
-    <script src="scene-loader.js?v=20261003b" defer></script>
+    <link rel="stylesheet" href="spatial.css?v=20261005">
+    <script src="scene-loader.js?v=20261005" defer></script>
+    <script src="depth.js?v=20261005" defer></script>
 
-    <script src="checkout-config.js?v=20261003b" defer></script>
-    <script src="product.js?v=20261003b" defer></script>
+    <script src="checkout-config.js?v=20261005" defer></script>
+    <script src="product.js?v=20261005" defer></script>
   </head>
   <body>
     <noscript><p class="noscript-note">You can browse all product details. Enable JavaScript to preview colors and review a kit.</p></noscript>
@@ -41,10 +42,10 @@
     <nav id="mobile-navigation" aria-label="Mobile navigation" hidden><a href="#series">Shop Devil’s Eye</a><a href="#construction">Construction</a><a href="#fitment">Fitment</a><a href="#questions">FAQs</a></nav>
     <main>
       <section class="showroom" id="projector-story" aria-labelledby="hero-title">
-        <div class="showroom-copy"><p class="eyebrow">NIGHT EYES / DEVIL’S EYE PROJECTORS</p><h1 id="hero-title">Own the<br><em>after dark.</em></h1><p class="hero-description">A gaze you can’t ignore. Explore the color, depth, and character of Devil’s Eye lighting.</p><div class="hero-actions"><a class="button button--primary" href="#series">Build your kit <span aria-hidden="true">↗</span></a><a class="hero-film-link" href="#film">Watch the product film <span aria-hidden="true">↘</span></a></div></div>
-        <div class="showroom-visual"><div class="eye-viewport" id="spatial-view"><img id="preview-eye" src="assets/sections/devil-eye-blue.webp" width="1440" height="1440" alt="Electric blue Devil’s Eye projector" fetchpriority="high"></div><button id="load-3d" class="scene-launch" type="button">Explore in 3D ↗</button><div id="scene-controls" class="scene-tools" hidden><button type="button" data-turn="-0.35" aria-label="Rotate projector left">←</button><button type="button" id="reset-3d">Reset view</button><button type="button" data-turn="0.35" aria-label="Rotate projector right">→</button></div><p id="scene-status" class="scene-note" role="status">A closer look, from a different angle.</p><p class="scene-disclosure">Illustrative 3D model. See kit photos for actual product details.</p><div class="preview-panel glass-container"><div class="preview-heading"><span>Find your gaze</span><output id="preview-name" aria-live="polite">Electric blue</output></div><div class="preview-buttons" role="group" aria-label="Preview eye color"><button type="button" data-preview="blue" aria-pressed="true"><i class="color-dot blue"></i>Blue</button><button type="button" data-preview="green" aria-pressed="false"><i class="color-dot green"></i>Green</button><button type="button" data-preview="purple" aria-pressed="false"><i class="color-dot purple"></i>Purple</button><button type="button" id="preview-blink">Try blink ↻</button></div></div></div>
+        <div class="showroom-copy"><p class="eyebrow">NIGHT EYES / DEVIL’S EYE PROJECTORS</p><h1 id="hero-title">Own the<br><em>after dark.</em></h1><p class="hero-description">Make your build impossible to overlook. Choose your gaze, explore every angle, and create your signature after dark.</p><div class="hero-actions"><a class="button button--primary" href="#series">Find your signature <span aria-hidden="true">↗</span></a><a class="hero-film-link" href="#film">Watch the product film <span aria-hidden="true">↘</span></a></div></div>
+        <div class="showroom-visual"><div class="eye-viewport" id="spatial-view"><img id="preview-eye" src="assets/sections/devil-eye-blue.webp" width="1440" height="1440" alt="Electric blue Devil’s Eye projector" fetchpriority="high"></div><button id="load-3d" class="scene-launch" type="button">Explore in 3D ↗</button><div id="scene-controls" class="scene-tools" hidden><button type="button" data-turn="-0.35" aria-label="Rotate projector left">←</button><button type="button" id="reset-3d">Reset view</button><button type="button" data-turn="0.35" aria-label="Rotate projector right">→</button></div><button id="scene-motion" class="motion-toggle" type="button" aria-pressed="true">Pause motion</button><p id="scene-status" class="scene-note" role="status">A living light. Every angle.</p><p class="scene-disclosure">Illustrative 3D model. See kit photos for actual product details.</p><div class="preview-panel glass-container"><div class="preview-heading"><span>Find your gaze</span><output id="preview-name" aria-live="polite">Electric blue</output></div><div class="preview-buttons" role="group" aria-label="Preview eye color"><button type="button" data-preview="blue" aria-pressed="true"><i class="color-dot blue"></i>Blue</button><button type="button" data-preview="green" aria-pressed="false"><i class="color-dot green"></i>Green</button><button type="button" data-preview="purple" aria-pressed="false"><i class="color-dot purple"></i>Purple</button><button type="button" id="preview-blink">Try blink ↻</button></div></div></div>
       </section>
-      <div class="product-ribbon" aria-label="Product highlights"><div><strong>12V</strong><span>Power input</span></div><div><strong>10W</strong><span>Rated power</span></div><div><strong>Remote</strong><span>Control included</span></div><div><strong>1 year</strong><span>Listed warranty</span></div></div>
+      <div class="product-ribbon" aria-label="Product highlights"><div><span class="depth-icon" aria-hidden="true"><img src="assets/scene/zap.svg" alt="" width="24" height="24"></span><strong>12V</strong><span>Power input</span></div><div><span class="depth-icon" aria-hidden="true"><img src="assets/scene/lightbulb.svg" alt="" width="24" height="24"></span><strong>10W</strong><span>Rated power</span></div><div><span class="depth-icon" aria-hidden="true"><img src="assets/scene/sliders-horizontal.svg" alt="" width="24" height="24"></span><strong>Remote</strong><span>Control included</span></div><div><span class="depth-icon" aria-hidden="true"><img src="assets/scene/shield-check.svg" alt="" width="24" height="24"></span><strong>1 year</strong><span>Listed warranty</span></div></div>
       <section class="series-section product-commerce" id="series" aria-labelledby="series-title">
         <header class="section-heading">
           <p class="eyebrow">MAKE IT YOURS</p>
@@ -96,7 +97,7 @@
               <label class="quantity">Qty <input id="quantity" type="number" min="1" max="10" value="1" inputmode="numeric"></label>
             </div>
             <label class="remember-kit"><input id="remember-kit" type="checkbox"> Remember my kit on this device <a href="privacy.html">Privacy</a></label>
-            <button class="product-buy" type="button" data-open-checkout>Review your kit <span>→</span></button>
+            <button class="product-buy" type="button" data-open-checkout>Review &amp; checkout <span>→</span></button>
             <p class="availability-note" id="availability-note" role="status">Online ordering is being prepared. Explore your kit and review the details below.</p><p class="purchase-note">Remote included · Check fitment before ordering</p><p class="purchase-note"><a href="shipping-returns.html">Shipping &amp; returns</a> · <a href="terms.html">Terms &amp; conditions</a></p>
           </div>
         </div>

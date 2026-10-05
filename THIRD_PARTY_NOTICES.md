@@ -27,3 +27,7 @@ SOFTWARE.
 ## Three.js
 
 The interactive illustrative projector uses Three.js (MIT), pinned in package-lock.json. License: assets/scene/THREE-LICENSE.txt. The model and showroom implementation are original code.
+
+## Lucide icons
+
+The dimensional feature badges use Lucide SVG icons (ISC). License: assets/scene/LUCIDE-LICENSE.txt.

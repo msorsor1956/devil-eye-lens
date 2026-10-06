@@ -1,3 +1,10 @@
+FROM node:22-alpine AS showroom-build
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY src/showroom.js src/showroom.js
+RUN npm run build
+
 FROM nginx:1.30.5-alpine
 
 RUN apk add --no-cache curl jq python3 py3-pip supervisor
@@ -11,6 +18,7 @@ COPY assets/sections /usr/share/nginx/html/assets/sections
 COPY assets/product /usr/share/nginx/html/assets/product
 
 COPY assets/scene /usr/share/nginx/html/assets/scene
+COPY --from=showroom-build /build/assets/scene/showroom.js /build/assets/scene/showroom.js.map /usr/share/nginx/html/assets/scene/
 
 RUN nginx -t
 

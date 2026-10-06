@@ -47,11 +47,15 @@ class PayPalTests(unittest.TestCase):
                 unit['payments']={'captures':[{'id':'CAPTURE123','status':'COMPLETED','amount':{'currency_code':'USD','value':'39.99'}}]}
                 return {'status':'COMPLETED','purchase_units':[unit]}
             return {'status':'APPROVED','purchase_units':[unit]}
-        def post(path,data,cookie=''):
-            req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/paypal/'+path,data=json.dumps(data).encode(),headers={'Origin':paypal.ORIGIN,'Cookie':cookie})
+        def post(path,data,cookie='',origin='https://nighteyes.pro'):
+            req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/paypal/'+path,data=json.dumps(data).encode(),headers={'Origin':origin,'Cookie':cookie})
             with urllib.request.urlopen(req) as response:return json.load(response), response.headers.get('Set-Cookie','').split(';')[0]
         try:
             with patch.object(paypal,'ready',True),patch.object(paypal,'api',side_effect=fake_api):
+                import urllib.error
+                with self.assertRaises(urllib.error.HTTPError) as blocked:
+                    post('create',{'kit':'single','color':'blue','quantity':1},origin='https://untrusted.example')
+                self.assertEqual(blocked.exception.code,403)
                 data,cookie=post('create',{'kit':'single','color':'blue','quantity':1,'total':1,'flow':'venmo'})
                 self.assertEqual(data['id'],'ORDER12345')
                 data,_=post('review',{'orderID':'ORDER12345'},cookie)

@@ -8,6 +8,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlparse
 
 ORIGIN = 'https://www.nighteyes.pro'
+ALLOWED_ORIGINS = {ORIGIN, 'https://nighteyes.pro', 'https://devil-eye-site-production.up.railway.app'}
 API = 'https://api-m.paypal.com'
 DB = os.environ.get('PAYPAL_ORDERS_DB', '/data/night-eyes/paypal.sqlite3')
 PRICES = {'single': 3000, 'twin': 3500}
@@ -129,7 +130,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(404, {'error': 'Not found'})
             if not ready:
                 return self.reply(503, {'error': 'PayPal is temporarily unavailable. Please try again later.'})
-            if self.path != '/api/paypal/webhook' and self.headers.get('Origin') != ORIGIN:
+            if self.path != '/api/paypal/webhook' and self.headers.get('Origin') not in ALLOWED_ORIGINS:
                 return self.reply(403, {'error': 'Please start checkout at www.nighteyes.pro.'})
             length = int(self.headers.get('Content-Length', '0'))
             if not 0 < length <= 262144:

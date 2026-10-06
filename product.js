@@ -51,6 +51,7 @@
   quantity.addEventListener('input',()=>quantity.setCustomValidity(''));
   let paypalReady = false;
   let venmoLoaded = false;
+  let checkoutError = '';
   const venmoButton = $('#venmo-checkout');
   const status = $('#checkout-status');
   async function paymentRequest(action, body) {
@@ -78,8 +79,11 @@
         fundingSource: window.paypal.FUNDING.VENMO,
         style:{layout:'vertical',height:48,shape:'rect'},
         createOrder:async()=>{
-          const result=await paymentRequest('create',{kit:kit.value.startsWith('Single')?'single':'twin',color:colors[selectedColor].key,quantity:Number(quantity.value),flow:'venmo'});
-          return result.id;
+          checkoutError = '';
+          try {
+            const result=await paymentRequest('create',{kit:kit.value.startsWith('Single')?'single':'twin',color:colors[selectedColor].key,quantity:Number(quantity.value),flow:'venmo'});
+            return result.id;
+          } catch(error) { checkoutError=error.message; status.textContent=checkoutError; throw error; }
         },
         onApprove:async data=>{
           status.textContent='Confirming your Venmo payment…';
@@ -90,7 +94,7 @@
           } catch(error) {status.textContent=error.message;}
         },
         onCancel:()=>{status.textContent='Venmo checkout cancelled. You can try again when ready.';},
-        onError:()=>{status.textContent='Venmo could not complete checkout. If you approved a payment, contact support before trying again.';}
+        onError:()=>{status.textContent=checkoutError || 'Venmo could not complete checkout. If you approved a payment, contact support before trying again.';}
       });
       if (!buttons.isEligible()) throw new Error('Venmo is not available for this device or account. Venmo checkout is available to eligible US customers.');
       $('#venmo-buttons').hidden=false;

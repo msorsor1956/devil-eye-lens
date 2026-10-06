@@ -939,3 +939,15 @@ h2 {
 #venmo-buttons{min-height:48px;margin:8px 0}
 #venmo-buttons[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){.payment-methods .pay-button{transition:none;transform:none}}
+
+/* Raised payment controls with a tactile pressed state. */
+.payment-methods{gap:18px;padding-bottom:8px;perspective:900px}
+.payment-methods .pay-button{position:relative;isolation:isolate;min-height:80px;border-radius:18px;border-top:1px solid rgba(255,255,255,.6);border-bottom:1px solid rgba(0,0,0,.28);box-shadow:0 7px 0 var(--button-base,#172c49),0 13px 22px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.3);transform:translateY(0) rotateX(0);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.payment-methods .pay-button--venmo{--button-base:#005599;background:linear-gradient(155deg,#39adff 0%,#0086ef 55%,#0069c6 100%)}
+.payment-methods .pay-button--stripe{--button-base:#39328b;background:linear-gradient(155deg,#938dff 0%,#635bff 55%,#5145d8 100%)}
+.payment-methods .pay-button--cash{--button-base:#05782e;background:linear-gradient(155deg,#65f794 0%,#00d64f 55%,#00ac40 100%)}
+.payment-methods .pay-button[aria-disabled=true]{opacity:.8}
+.payment-methods .pay-button>span:last-child{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.14);box-shadow:inset 0 1px 1px rgba(255,255,255,.4),0 2px 3px rgba(0,0,0,.15)}
+@media(hover:hover){.payment-methods .pay-button:hover:not(:disabled){transform:translateY(-3px) rotateX(3deg);filter:brightness(1.05);box-shadow:0 10px 0 var(--button-base),0 18px 28px rgba(0,0,0,.38),inset 0 2px 0 rgba(255,255,255,.4)}}
+.payment-methods .pay-button:active:not(:disabled){transform:translateY(5px);box-shadow:0 2px 0 var(--button-base),0 5px 10px rgba(0,0,0,.3),inset 0 1px 3px rgba(0,0,0,.2)}
+@media(prefers-reduced-motion:reduce){.payment-methods .pay-button,.payment-methods .pay-button:hover:not(:disabled),.payment-methods .pay-button:active:not(:disabled){transition:none;transform:none}}

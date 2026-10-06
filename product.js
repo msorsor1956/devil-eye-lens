@@ -52,6 +52,10 @@
   let paypalReady = false;
   let venmoLoaded = false;
   let checkoutError = '';
+  function restoreCheckout() {
+    if (!dialog.open) dialog.showModal();
+    document.body.classList.add('dialog-open');
+  }
   const venmoButton = $('#venmo-checkout');
   const status = $('#checkout-status');
   async function paymentRequest(action, body) {
@@ -77,6 +81,8 @@
       });
       const buttons = window.paypal.Buttons({
         fundingSource: window.paypal.FUNDING.VENMO,
+        // Native modal dialogs occupy the browser top layer above SDK overlays.
+        onClick:()=>{dialog.close();document.body.classList.remove('dialog-open');},
         style:{layout:'vertical',height:48,shape:'rect'},
         createOrder:async()=>{
           checkoutError = '';
@@ -86,6 +92,7 @@
           } catch(error) { checkoutError=error.message; status.textContent=checkoutError; throw error; }
         },
         onApprove:async data=>{
+          restoreCheckout();
           status.textContent='Confirming your Venmo payment…';
           try {
             const result=await paymentRequest('capture',{orderID:data.orderID});
@@ -93,8 +100,8 @@
             $('#venmo-buttons').hidden=true;venmoButton.disabled=true;
           } catch(error) {status.textContent=error.message;}
         },
-        onCancel:()=>{status.textContent='Venmo checkout cancelled. You can try again when ready.';},
-        onError:()=>{status.textContent=checkoutError || 'Venmo could not complete checkout. If you approved a payment, contact support before trying again.';}
+        onCancel:()=>{restoreCheckout();status.textContent='Venmo checkout cancelled. You can try again when ready.';},
+        onError:()=>{restoreCheckout();status.textContent=checkoutError || 'Venmo could not complete checkout. If you approved a payment, contact support before trying again.';}
       });
       if (!buttons.isEligible()) throw new Error('Venmo is not available for this device or account. Venmo checkout is available to eligible US customers.');
       $('#venmo-buttons').hidden=false;

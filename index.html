@@ -33,7 +33,7 @@
     <script src="depth.js?v=20261005" defer></script>
 
     <script src="checkout-config.js?v=20261005-prices" defer></script>
-    <script src="product.js?v=20261006-paypal" defer></script>
+    <script src="product.js?v=20261006-venmo" defer></script>
   </head>
   <body>
     <noscript><p class="noscript-note">You can browse all product details. Enable JavaScript to preview colors and review a kit.</p></noscript>
@@ -161,9 +161,9 @@
           <strong id="checkout-price">$39.99 before tax</strong>
         </div>
         <div class="payment-methods">
-          <button class="pay-button pay-button--paypal" id="paypal-checkout" type="button" disabled>Pay with PayPal <span>→</span></button>
-          <a class="pay-button pay-button--stripe" id="stripe-checkout" aria-disabled="true">Pay securely with Stripe <span>→</span></a>
-          <a class="pay-button pay-button--cash" id="cashapp-checkout" aria-disabled="true">Pay with Cash App <span>↗</span></a>
+          <button class="pay-button pay-button--venmo" id="venmo-checkout" type="button" aria-describedby="checkout-status"><span>Pay with Venmo<small>Secure checkout through PayPal</small></span><span aria-hidden="true">→</span></button><div id="venmo-buttons" hidden></div>
+          <button class="pay-button pay-button--stripe" id="stripe-checkout" type="button" aria-disabled="true"><span>Pay with card<small>Secure checkout through Stripe</small></span><span aria-hidden="true">→</span></button>
+          <button class="pay-button pay-button--cash" id="cashapp-checkout" type="button" aria-disabled="true"><span>Pay with Cash App<small>Cash App Pay</small></span><span aria-hidden="true">→</span></button>
         </div>
         <p class="checkout-status" id="checkout-status" role="status">Online ordering is not available yet. Review your selection here.</p>
         <p class="checkout-legal">Payment opens in the provider's secure checkout. Never enter card information directly on this page.</p>

@@ -50,37 +50,59 @@
   [kit,quantity].forEach(el=>el.addEventListener('change',save));
   quantity.addEventListener('input',()=>quantity.setCustomValidity(''));
   let paypalReady = false;
-  const paypalButton = $('#paypal-checkout');
-  fetch('/api/paypal/health').then(r=>r.json()).then(data=>{
-    paypalReady = data.ready === true;
-    paypalButton.disabled = !paypalReady;
-    if (paypalReady) {
-      $('#availability-note').textContent = 'PayPal checkout available · USA and Canada · $9.99 shipping per order';
-      $('#ordering-answer').textContent = 'Choose your kit, then pay using PayPal. Review the shipping and return terms before ordering.';
-    }
-  }).catch(()=>{});
-  paypalButton.addEventListener('click', async()=>{
-    if (!paypalReady || !validQuantity()) return;
-    paypalButton.disabled = true;
-    $('#checkout-status').textContent = 'Opening your secure PayPal checkout…';
+  let venmoLoaded = false;
+  const venmoButton = $('#venmo-checkout');
+  const status = $('#checkout-status');
+  async function paymentRequest(action, body) {
+    const response = await fetch('/api/paypal/' + action, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Payment is temporarily unavailable.');
+    return data;
+  }
+  fetch('/api/paypal/health').then(r=>r.json()).then(data=>{paypalReady = data.ready === true;}).catch(()=>{});
+  venmoButton.addEventListener('click', async()=>{
+    if (!validQuantity()) return;
+    if (venmoLoaded) { $('#venmo-buttons').hidden = false; return; }
+    venmoButton.disabled = true;
+    status.textContent = 'Checking Venmo availability…';
     try {
-      const response = await fetch('/api/paypal/create', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kit:kit.value.startsWith('Single')?'single':'twin', color:colors[selectedColor].key, quantity:Number(quantity.value)})});
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'PayPal is temporarily unavailable.');
-      const url = new URL(data.url);
-      if (url.protocol !== 'https:' || !['www.paypal.com','paypal.com'].includes(url.hostname)) throw new Error('Unable to open checkout.');
-      location.assign(url.href);
-    } catch (error) {
-      $('#checkout-status').textContent = error.message;
-      paypalButton.disabled = false;
-    }
+      const response = await fetch('/api/paypal/config');
+      const config = await response.json();
+      if (!response.ok || !config.clientId) throw new Error('Venmo is temporarily unavailable while our payment connection is being completed. Please contact support@nighteyes.pro.');
+      if (!window.paypal) await new Promise((resolve,reject)=>{
+        const script=document.createElement('script');
+        script.src='https://www.paypal.com/sdk/js?'+new URLSearchParams({'client-id':config.clientId,currency:'USD',intent:'capture',components:'buttons','enable-funding':'venmo'});
+        script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('Unable to load Venmo. Please try again.'));};document.head.append(script);
+      });
+      const buttons = window.paypal.Buttons({
+        fundingSource: window.paypal.FUNDING.VENMO,
+        style:{layout:'vertical',height:48,shape:'rect'},
+        createOrder:async()=>{
+          const result=await paymentRequest('create',{kit:kit.value.startsWith('Single')?'single':'twin',color:colors[selectedColor].key,quantity:Number(quantity.value),flow:'venmo'});
+          return result.id;
+        },
+        onApprove:async data=>{
+          status.textContent='Confirming your Venmo payment…';
+          try {
+            const result=await paymentRequest('capture',{orderID:data.orderID});
+            status.textContent=result.status==='paid'?'Payment received. Thank you! Order reference: '+result.reference:'Payment status: '+result.status+'. Contact support with order reference '+result.reference+' before paying again.';
+            $('#venmo-buttons').hidden=true;venmoButton.disabled=true;
+          } catch(error) {status.textContent=error.message;}
+        },
+        onCancel:()=>{status.textContent='Venmo checkout cancelled. You can try again when ready.';},
+        onError:()=>{status.textContent='Venmo could not complete checkout. If you approved a payment, contact support before trying again.';}
+      });
+      if (!buttons.isEligible()) throw new Error('Venmo is not available for this device or account. Venmo checkout is available to eligible US customers.');
+      $('#venmo-buttons').hidden=false;
+      await buttons.render('#venmo-buttons');
+      venmoLoaded=true;
+      status.textContent='Continue with the secure Venmo button below. Your kit and $9.99 shipping are included.';
+    } catch(error) {status.textContent=error.message;}
+    finally {venmoButton.disabled=false;}
   });
-  let enabled=0;
-  [['#stripe-checkout',config.stripePaymentLink,'buy.stripe.com'],['#cashapp-checkout',config.cashAppUrl,'cash.app']].forEach(([id,url,host])=>{
-    const a=$(id);let valid=false;
-    try {const u=new URL(url);valid=u.protocol==='https:'&&u.hostname===host&&!u.username&&!u.password&&config.allowUnlinkedCheckout===true;}catch{}
-    if(valid){a.href=url;a.removeAttribute('aria-disabled');a.target='_blank';a.rel='noopener noreferrer';enabled++;}
-    else {a.removeAttribute('href');a.setAttribute('aria-disabled','true');a.setAttribute('role','link');}
+  const enabled=0;
+  [['#stripe-checkout','Card checkout is not available yet.'],['#cashapp-checkout','Cash App checkout is not available yet.']].forEach(([id,message])=>{
+    $(id).addEventListener('click',()=>{status.textContent=message+' Please contact support@nighteyes.pro.';});
   });
   const money=cents=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100);
   function updatePrice(){
@@ -96,7 +118,7 @@
   $$('[data-open-checkout]').forEach(b=>b.addEventListener('click',()=>{
     quantity.setCustomValidity(validQuantity()?'':'Enter a whole number from 1 to 10.');if(!quantity.reportValidity())return;
     const saved=save();$('#checkout-variant').textContent=selectedColor;$('#checkout-kit').textContent=kit.options[kit.selectedIndex].text;$('#checkout-quantity').textContent=`Quantity ${quantity.value}`;
-    $('#checkout-status').textContent=paypalReady?'Your kit, color, quantity and $9.99 shipping charge carry into PayPal. Shipping is limited to USA and Canada.':enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':$('#remember-kit').checked?'Your selection remains on this page; browser storage is unavailable.':'Your selection is not saved on this device.'}`;
+    $('#checkout-status').textContent=paypalReady?'Choose Venmo to check availability for your device and account. Your kit and $9.99 shipping carry into checkout.':enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':$('#remember-kit').checked?'Your selection remains on this page; browser storage is unavailable.':'Your selection is not saved on this device.'}`;
     dialog.showModal();document.body.classList.add('dialog-open');
   }));
   $$('dialog').forEach(d=>{d.addEventListener('close',()=>document.body.classList.remove('dialog-open'));d.addEventListener('click',e=>{const r=d.getBoundingClientRect();if(e.target===d&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))d.close();});});

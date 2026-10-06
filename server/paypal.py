@@ -82,7 +82,7 @@ def record_order(row, order):
         capture = captures[0]
         capture_id = capture['id']
         state = {'COMPLETED': 'paid', 'PENDING': 'pending', 'DECLINED': 'denied', 'REFUNDED': 'refunded', 'PARTIALLY_REFUNDED': 'partially_refunded'}.get(capture['status'], 'review')
-    email = order.get('payment_source', {}).get('paypal', {}).get('email_address') or order.get('payer', {}).get('email_address')
+    email = (order.get('payment_source', {}).get('venmo', {}).get('email_address') or order.get('payment_source', {}).get('paypal', {}).get('email_address')) or order.get('payer', {}).get('email_address')
     with connect() as db:
         db.execute("UPDATE orders SET state=CASE WHEN state IN ('refunded','reversed','partially_refunded','refund_review') THEN state WHEN state='paid' AND ? IN ('approved','pending','denied') THEN state ELSE ? END,capture_id=COALESCE(?,capture_id),shipping=?,email=? WHERE id=?", (state, state, capture_id, json.dumps(shipping), email, row['id']))
     return state
@@ -118,6 +118,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
     def do_GET(self):
+        if self.path == '/api/paypal/config':
+            return self.reply(200 if ready else 503, {'clientId': os.environ.get('PAYPAL_CLIENT_ID', '').strip()} if ready else {'error': 'Payment connection unavailable'})
         if self.path == '/api/paypal/health':
             return self.reply(200, {'ready': ready})
         self.reply(404, {'error': 'Not found'})
@@ -149,13 +151,21 @@ class Handler(BaseHTTPRequestHandler):
                     if count >= 5:
                         return self.reply(429, {'error': 'Please wait a minute before trying again.'})
                     db.execute('INSERT INTO orders (id,session,kit,color,quantity,total,state,created) VALUES (?,?,?,?,?,?,?,?)', (local_id, session_hash, kit, color, quantity, total, 'created', int(time.time())))
-                order = api('/v2/checkout/orders', {
+                payload = {
                     'intent': 'CAPTURE',
                     'purchase_units': [{'custom_id': local_id, 'invoice_id': local_id, 'description': f'Night Eyes {kit} projector / {color}',
                         'items': [{'name': f'Night Eyes {kit} projector', 'description': color + ' lighting selection', 'quantity': str(quantity), 'category': 'PHYSICAL_GOODS', 'unit_amount': {'currency_code': 'USD', 'value': money(PRICES[kit])}}],
                         'amount': {'currency_code': 'USD', 'value': money(total), 'breakdown': {'item_total': {'currency_code': 'USD', 'value': money(total - 999)}, 'shipping': {'currency_code': 'USD', 'value': '9.99'}}}}],
                     'payment_source': {'paypal': {'experience_context': {'brand_name': 'Night Eyes', 'user_action': 'CONTINUE', 'shipping_preference': 'GET_FROM_FILE', 'return_url': ORIGIN + '/paypal-return.html', 'cancel_url': ORIGIN + '/paypal-return.html?cancelled=1'}}}
-                }, local_id)
+                }
+                if data.get('flow') == 'venmo':
+                    # The PayPal JS SDK supplies the buyer-selected Venmo source.
+                    payload.pop('payment_source')
+                order = api('/v2/checkout/orders', payload, local_id)
+                if data.get('flow') == 'venmo':
+                    with connect() as db:
+                        db.execute('UPDATE orders SET paypal_id=? WHERE id=?', (order['id'], local_id))
+                    return self.reply(200, {'id': order['id']}, session)
                 url = next(link['href'] for link in order['links'] if link['rel'] in {'payer-action', 'approve'})
                 parsed = urlparse(url)
                 if parsed.scheme != 'https' or parsed.hostname not in {'www.paypal.com', 'paypal.com'}:

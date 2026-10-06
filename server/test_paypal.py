@@ -38,6 +38,7 @@ class PayPalTests(unittest.TestCase):
         captured=[]; purchase={}
         def fake_api(path, body=None, request_id=None):
             if path=='/v2/checkout/orders':
+                self.assertNotIn('payment_source',body)
                 purchase.update(body['purchase_units'][0])
                 return {'id':'ORDER12345','links':[{'rel':'payer-action','href':'https://www.paypal.com/checkoutnow?token=ORDER12345'}]}
             unit={**purchase,'shipping':{'address':{'country_code':'CA'}}}
@@ -51,8 +52,8 @@ class PayPalTests(unittest.TestCase):
             with urllib.request.urlopen(req) as response:return json.load(response), response.headers.get('Set-Cookie','').split(';')[0]
         try:
             with patch.object(paypal,'ready',True),patch.object(paypal,'api',side_effect=fake_api):
-                data,cookie=post('create',{'kit':'single','color':'blue','quantity':1,'total':1})
-                self.assertTrue(data['url'].startswith('https://www.paypal.com/'))
+                data,cookie=post('create',{'kit':'single','color':'blue','quantity':1,'total':1,'flow':'venmo'})
+                self.assertEqual(data['id'],'ORDER12345')
                 data,_=post('review',{'orderID':'ORDER12345'},cookie)
                 self.assertEqual(data['total'],'39.99')
                 for _ in range(2):

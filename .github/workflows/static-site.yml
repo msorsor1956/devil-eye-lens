@@ -23,6 +23,10 @@ jobs:
           node --check product.js
           node --check privacy.js
           node --check checkout-config.js
+      - name: Test Stripe webhook verification and persistence
+        run: |
+          python3 -m pip install -r server/requirements.txt
+          python3 -m unittest discover -s server -p "test_*.py"
       - name: Build storefront and validate nginx configuration
         run: docker build --pull -t devil-eye-check .
       - name: Verify server responses and security headers

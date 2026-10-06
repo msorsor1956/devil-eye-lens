@@ -1,6 +1,6 @@
 FROM nginx:1.30.5-alpine
 
-RUN apk add --no-cache curl jq
+RUN apk add --no-cache curl jq python3 py3-pip supervisor
 COPY scripts/25-stripe-check.sh /docker-entrypoint.d/25-stripe-check.sh
 RUN chmod 700 /docker-entrypoint.d/25-stripe-check.sh
 
@@ -15,3 +15,10 @@ COPY assets/scene /usr/share/nginx/html/assets/scene
 RUN nginx -t
 
 EXPOSE 80
+
+COPY server/requirements.txt /app/requirements.txt
+RUN python3 -m venv /opt/webhook && /opt/webhook/bin/pip install --no-cache-dir -r /app/requirements.txt
+COPY server/webhook.py /app/webhook.py
+COPY server/supervisord.conf /etc/supervisord.conf
+ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD []

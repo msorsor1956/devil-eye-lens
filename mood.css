@@ -1,0 +1,35 @@
+:root{--mood-accent:#b3dcf5;--mood-soft:#d8efff;--mood-hue:0deg}
+:root[data-mood=green]{--mood-accent:#a7ef92;--mood-soft:#e5f9da;--mood-hue:-105deg}
+:root[data-mood=purple]{--mood-accent:#d1b4ff;--mood-soft:#f0e5ff;--mood-hue:65deg}
+:root[data-mood=red]{--mood-accent:#ffaaa5;--mood-soft:#ffe1dc;--mood-hue:145deg}
+:root[data-mood]{--accent:var(--mood-accent);--product-accent:var(--mood-accent);--blue:var(--mood-accent)}
+.campaign-content h1 span,.light-studio .showroom-copy h2 em{color:var(--mood-accent)}
+.campaign-cta{background:linear-gradient(145deg,var(--mood-soft),var(--mood-accent))}
+:root:not([data-mood=auto]) .car-eye-color{animation:none;filter:hue-rotate(var(--mood-hue))}
+:root:not([data-mood=auto]) .car-snake-pupil{animation:none;opacity:0}
+:root[data-mood=green] .car-snake-pupil{opacity:1}
+.mood-panel{position:fixed;right:18px;bottom:18px;z-index:90;font:12px/1.5 Arial,sans-serif;color:#e8f3fa;border:1px solid #718ca566;border-radius:14px;background:#101c29f2;box-shadow:0 8px 30px #0004;backdrop-filter:blur(16px);max-width:calc(100vw - 36px)}
+.mood-panel summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:25px;padding:12px 16px;min-height:44px;list-style:none}.mood-panel summary::-webkit-details-marker{display:none}.mood-panel summary span{color:var(--mood-accent);font-size:18px}.mood-options{padding:0 14px 14px;width:225px;display:grid;gap:10px}.mood-options button,.mood-options select{width:100%;min-height:44px;margin:0;padding:10px 12px;border-radius:8px;border:1px solid #718ca5;background:#213244;color:#f4f8fc;font:inherit;cursor:pointer}.mood-options label{font-size:11px;color:#cbd7e1}.mood-options .mood-reset{background:transparent;font-size:11px}.mood-panel :focus-visible{outline:3px solid var(--mood-accent);outline-offset:3px}
+:root[data-theme=light]{color-scheme:light;background:#f3f6fa;--graphite-bottom:#f3f6fa;--surface:#fff;--muted:#536174;--line:#cbd5df;--product-panel:#fff;--product-line:#cbd5df;--accent:#235a83;--product-accent:#235a83;--blue:#235a83}
+:root[data-theme=light][data-mood=green]{--accent:#216b2e;--product-accent:#216b2e;--blue:#216b2e}
+:root[data-theme=light][data-mood=purple]{--accent:#69439b;--product-accent:#69439b;--blue:#69439b}
+:root[data-theme=light][data-mood=red]{--accent:#9e332f;--product-accent:#9e332f;--blue:#9e332f}
+[data-theme=light] body,[data-theme=light] .product-page{background:#f3f6fa;color:#14283c}
+[data-theme=light] .showroom-header,[data-theme=light] .checkout-header{background:#fffffff2;color:#14283c;border-color:#ccd8e4}
+[data-theme=light] .showroom-header a,[data-theme=light] .checkout-header a{color:#14283c}
+[data-theme=light] .campaign-details{background:#e6eef5;color:#14283c}
+[data-theme=light] .campaign-details span{color:#536174}
+[data-theme=light] .light-studio.showroom:before{background:radial-gradient(ellipse at 78% 45%,#bdd9ed,transparent 50%),#edf3f8}
+[data-theme=light] .light-studio .showroom-copy h2,[data-theme=light] .section-heading h2,[data-theme=light] .product-title,[data-theme=light] .product-price,[data-theme=light] .product-ribbon strong{color:#14283c}
+[data-theme=light] .light-studio .showroom-copy h2 em{color:var(--accent)}
+[data-theme=light] .hero-description,[data-theme=light] .product-lead,[data-theme=light] .scene-note,[data-theme=light] .scene-disclosure,[data-theme=light] .look-status,[data-theme=light] .film-caption{color:#536174}
+[data-theme=light] .hero-film-link{color:#235a83}
+[data-theme=light] .product-gallery__stage,[data-theme=light] .product-thumbs button,[data-theme=light] .preview-panel,[data-theme=light] .product-select,[data-theme=light] .product-quantity input,[data-theme=light] .order-summary,[data-theme=light] .notice,[data-theme=light] .shipping-method{background:#e5edf5;color:#14283c;border-color:#b8c8d8}
+[data-theme=light] input,[data-theme=light] select{background:#fff;color:#14283c;border-color:#aebfd0}
+[data-theme=light] label,[data-theme=light] .consent,[data-theme=light] .legal-page,[data-theme=light] .legal-page p{color:#34495f}
+[data-theme=light] .questions-section details,[data-theme=light] .questions-section summary,[data-theme=light] .fitment-guide li,[data-theme=light] .closing-section,[data-theme=light] .site-footer{color:#14283c;border-color:#cbd5df}
+[data-theme=light] .mood-panel{background:#fffffff2;color:#14283c;border-color:#aebfd0}
+[data-theme=light] .mood-options button,[data-theme=light] .mood-options select{background:#e5edf5;color:#14283c;border-color:#aebfd0}
+[data-theme=light] .mood-options label{color:#536174}
+/* Cinematic imagery and branded payment buttons retain their own contrast. */
+@media(max-width:600px){.mood-panel{right:12px;bottom:12px}.mood-panel summary{padding:10px 13px}.mood-options{width:205px}}

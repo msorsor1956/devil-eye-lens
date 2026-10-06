@@ -74,7 +74,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(413,'invalid_size')
             self.connection.settimeout(10)
             body=self.rfile.read(length)
-            event=stripe.Webhook.construct_event(body,self.headers.get('Stripe-Signature',''),secret,tolerance=300)
+            stripe.Webhook.construct_event(body,self.headers.get('Stripe-Signature',''),secret,tolerance=300)
+            event=json.loads(body)
             # Stripe SDK rejects stale signatures; reject future timestamps as well.
             import time
             timestamp=int(next(x[2:] for x in self.headers.get('Stripe-Signature','').split(',') if x.startswith('t=')))

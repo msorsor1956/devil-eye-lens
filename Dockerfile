@@ -18,7 +18,8 @@ EXPOSE 80
 
 COPY server/requirements.txt /app/requirements.txt
 RUN python3 -m venv /opt/webhook && /opt/webhook/bin/pip install --no-cache-dir -r /app/requirements.txt
-COPY server/webhook.py /app/webhook.py
+COPY server/webhook.py server/paypal.py /app/
+COPY paypal-return.html paypal-return.js /usr/share/nginx/html/
 COPY server/supervisord.conf /etc/supervisord.conf
 ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 CMD []

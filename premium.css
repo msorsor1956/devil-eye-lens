@@ -922,3 +922,5 @@ h2 {
 .noscript-note {padding:1rem 5%;background:#24242c}
 .no-js .preview-panel,.no-js .variant-picker,.no-js .kit-picker,.no-js .purchase-row,.no-js .product-buy,.no-js .remember-kit,.no-js .zoom-product,.no-js #menu-toggle {display:none}
 .no-js .desktop-nav {display:flex;flex-wrap:wrap}
+
+.pay-button--paypal{background:#ffc439;color:#102b53;border:0;width:100%;cursor:pointer;font:inherit}.pay-button--paypal:disabled{opacity:.45;cursor:wait}

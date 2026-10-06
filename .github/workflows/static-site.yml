@@ -21,6 +21,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check product.js
+          node --check paypal-return.js
           node --check privacy.js
           node --check checkout-config.js
       - name: Test Stripe webhook verification and persistence

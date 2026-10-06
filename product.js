@@ -49,6 +49,32 @@
   $('#remember-kit').addEventListener('change',()=>{if($('#remember-kit').checked)save();else try{localStorage.removeItem('devil-eye-kit');}catch{}});
   [kit,quantity].forEach(el=>el.addEventListener('change',save));
   quantity.addEventListener('input',()=>quantity.setCustomValidity(''));
+  let paypalReady = false;
+  const paypalButton = $('#paypal-checkout');
+  fetch('/api/paypal/health').then(r=>r.json()).then(data=>{
+    paypalReady = data.ready === true;
+    paypalButton.disabled = !paypalReady;
+    if (paypalReady) {
+      $('#availability-note').textContent = 'PayPal checkout available · USA and Canada · $9.99 shipping per order';
+      $('#ordering-answer').textContent = 'Choose your kit, then pay using PayPal. Review the shipping and return terms before ordering.';
+    }
+  }).catch(()=>{});
+  paypalButton.addEventListener('click', async()=>{
+    if (!paypalReady || !validQuantity()) return;
+    paypalButton.disabled = true;
+    $('#checkout-status').textContent = 'Opening your secure PayPal checkout…';
+    try {
+      const response = await fetch('/api/paypal/create', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({kit:kit.value.startsWith('Single')?'single':'twin', color:colors[selectedColor].key, quantity:Number(quantity.value)})});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'PayPal is temporarily unavailable.');
+      const url = new URL(data.url);
+      if (url.protocol !== 'https:' || !['www.paypal.com','paypal.com'].includes(url.hostname)) throw new Error('Unable to open checkout.');
+      location.assign(url.href);
+    } catch (error) {
+      $('#checkout-status').textContent = error.message;
+      paypalButton.disabled = false;
+    }
+  });
   let enabled=0;
   [['#stripe-checkout',config.stripePaymentLink,'buy.stripe.com'],['#cashapp-checkout',config.cashAppUrl,'cash.app']].forEach(([id,url,host])=>{
     const a=$(id);let valid=false;
@@ -70,7 +96,7 @@
   $$('[data-open-checkout]').forEach(b=>b.addEventListener('click',()=>{
     quantity.setCustomValidity(validQuantity()?'':'Enter a whole number from 1 to 10.');if(!quantity.reportValidity())return;
     const saved=save();$('#checkout-variant').textContent=selectedColor;$('#checkout-kit').textContent=kit.options[kit.selectedIndex].text;$('#checkout-quantity').textContent=`Quantity ${quantity.value}`;
-    $('#checkout-status').textContent=enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':$('#remember-kit').checked?'Your selection remains on this page; browser storage is unavailable.':'Your selection is not saved on this device.'}`;
+    $('#checkout-status').textContent=paypalReady?'Your kit, color, quantity and $9.99 shipping charge carry into PayPal. Shipping is limited to USA and Canada.':enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':$('#remember-kit').checked?'Your selection remains on this page; browser storage is unavailable.':'Your selection is not saved on this device.'}`;
     dialog.showModal();document.body.classList.add('dialog-open');
   }));
   $$('dialog').forEach(d=>{d.addEventListener('close',()=>document.body.classList.remove('dialog-open'));d.addEventListener('click',e=>{const r=d.getBoundingClientRect();if(e.target===d&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))d.close();});});

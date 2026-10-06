@@ -4,7 +4,7 @@
   <meta name="robots" content="noindex,follow"><meta name="color-scheme" content="dark">
   <title>Secure checkout | Night Eyes</title>
   <link rel="icon" href="/assets/sections/devil-eyes-favicon.svg?v=20261003" type="image/svg+xml">
-  <link rel="stylesheet" href="checkout.css?v=20261006-1">
+  <link rel="stylesheet" href="checkout.css?v=20261006-buttons">
   <script src="checkout.js?v=20261006-1" defer></script>
 </head><body>
   <a class="skip-link" href="#checkout-main">Skip to checkout</a>
@@ -44,11 +44,11 @@
           <div id="delivery-review" class="delivery-review" hidden><span class="eyebrow">DELIVER TO</span><p id="delivery-summary"></p><button id="edit-details" class="text-button" type="button">Edit customer &amp; shipping details</button></div>
           <label class="consent"><input id="accept-terms" type="checkbox"><span>I have reviewed my product, shipping address and total. I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms &amp; conditions</a> and <a href="shipping-returns.html" target="_blank" rel="noopener">Shipping &amp; returns policy</a>, and have read the <a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a>.</span></label>
           <div class="payment-grid" id="payment-options" aria-label="Payment methods">
-            <button class="payment-button venmo" data-method="venmo" type="button" disabled><span>Pay with Venmo<small>Secure payment through PayPal</small></span><span aria-hidden="true">↗</span></button>
-            <button class="payment-button" data-method="card" type="button" disabled><span>Pay with card<small>Debit or credit through PayPal</small></span><span aria-hidden="true">↗</span></button>
-            <button class="payment-button" data-method="applepay" type="button" disabled><span>Apple Pay<small>On supported devices</small></span><span aria-hidden="true">↗</span></button>
-            <button class="payment-button" data-method="googlepay" type="button" disabled><span>Google Pay<small>On supported devices</small></span><span aria-hidden="true">↗</span></button>
-            <button class="payment-button paypal" data-method="paypal" type="button" disabled><span>PayPal<small>Pay with your PayPal account</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button venmo" data-method="venmo" type="button" disabled><span>Pay with Venmo<small>Through PayPal</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button" data-method="card" type="button" disabled><span>Pay with card<small>Debit or credit · PayPal</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button" data-method="applepay" type="button" disabled><span>Apple Pay<small>Supported devices</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button" data-method="googlepay" type="button" disabled><span>Google Pay<small>Supported devices</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button paypal" data-method="paypal" type="button" disabled><span>PayPal<small>Your PayPal account</small></span><span aria-hidden="true">↗</span></button>
           </div>
           <div id="provider-buttons" class="provider-buttons" hidden></div>
           <p id="payment-status" class="help-text" role="status" aria-live="polite">Calculate your total and accept the terms to unlock secure payment options.</p>

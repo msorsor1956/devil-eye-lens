@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="spatial.css?v=20261005">
     <script src="scene-loader.js?v=20261005" defer></script>
     <script src="depth.js?v=20261005" defer></script>
-    <link rel="stylesheet" href="homepage.css?v=20261006-campaign">
+    <link rel="stylesheet" href="homepage.css?v=20261006-blinking-eyes">
     <script src="homepage.js?v=20261006-campaign" defer></script>
 
     <script src="checkout-config.js?v=20261005-prices" defer></script>
@@ -44,7 +44,21 @@
     <nav id="mobile-navigation" aria-label="Mobile navigation" hidden><a href="#series">Shop Devil’s Eye</a><a href="#construction">Construction</a><a href="#fitment">Fitment</a><a href="#questions">FAQs</a></nav>
     <main>
             <section class="campaign-hero" id="projector-story" aria-labelledby="hero-title">
-        <img class="campaign-image" src="assets/sections/night-eyes-campaign.webp" width="1672" height="941" alt="Concept of a black custom SUV with electric-blue eye lighting on a rain-washed private courtyard" fetchpriority="high">
+        <svg class="campaign-image campaign-car" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Black custom SUV with blinking eyes cycling through blue, green and purple">
+          <defs>
+            <clipPath id="car-eye-left"><ellipse cx="701" cy="429" rx="34" ry="40"/></clipPath>
+            <clipPath id="car-eye-right"><ellipse cx="1125" cy="426" rx="47" ry="42"/></clipPath>
+          </defs>
+          <image href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/>
+          <g clip-path="url(#car-eye-left)">
+            <ellipse cx="701" cy="429" rx="35" ry="41" fill="#050b13"/>
+            <g class="car-eye-blink car-eye-left"><image clip-path="url(#car-eye-left)" class="car-eye-color" href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/></g>
+          </g>
+          <g clip-path="url(#car-eye-right)">
+            <ellipse cx="1125" cy="426" rx="48" ry="43" fill="#050b13"/>
+            <g class="car-eye-blink car-eye-right"><image clip-path="url(#car-eye-right)" class="car-eye-color" href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/></g>
+          </g>
+        </svg>
         <div class="campaign-shade" aria-hidden="true"></div>
         <div class="campaign-content"><p class="campaign-label">NIGHT EYES / AFTER DARK COLLECTION</p><h1 id="hero-title">Make them<br><span>look twice.</span></h1><p class="campaign-description">An unforgettable gaze. A signature that’s yours.<br>Discover Devil’s Eye LED projector kits.</p><div class="campaign-actions"><a class="campaign-cta" href="#series">Build your signature <span aria-hidden="true">↗</span></a><a class="campaign-secondary" href="#light-studio">Enter the light studio <span aria-hidden="true">↓</span></a></div><a class="saved-look" id="saved-look" href="#series" hidden>Welcome back. Your saved kit is ready ↗</a></div>
         <div class="campaign-footer"><span>Illustrative vehicle concept. Confirm fitment before purchase.</span><button id="campaign-motion" type="button" aria-pressed="false">Pause atmosphere</button></div>

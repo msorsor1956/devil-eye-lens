@@ -36,3 +36,5 @@
 [data-theme=light] .order-panel,[data-theme=light] .delivery-review,[data-theme=light] .provider-buttons{background:#e5edf5;color:#14283c;border-color:#b8c8d8;box-shadow:0 12px 30px #14283c12}
 [data-theme=light] .availability-note,[data-theme=light] .construction-copy h2 span{color:#536174}
 [data-theme=light] .kit-picker select{background:#fff;color:#14283c}
+[data-theme=light] .totals dt{color:#536174}
+[data-theme=light] .grand-total dt{color:#14283c}

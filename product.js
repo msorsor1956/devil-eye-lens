@@ -40,7 +40,7 @@
     if(data && colors[data.color]) {$('#remember-kit').checked=true;selectColor(data.color);if([...kit.options].some(o=>o.value===data.kit))kit.value=data.kit;if(Number.isInteger(data.quantity)&&data.quantity>=1&&data.quantity<=10)quantity.value=data.quantity;}
   } catch { /* Storage is optional; browsing remains available. */ }
   const incoming=new URLSearchParams(location.search);
-  if(incoming.get('checkout')==='1') {
+  if(incoming.get('checkout')==='1'||incoming.get('look')==='1') {
     const color=Object.keys(colors).find(name=>colors[name].key===incoming.get('color'));
     if(color)selectColor(color);
     const requested=incoming.get('kit');if(['single','twin'].includes(requested))kit.value=requested==='single'?'Single projector / 55 cm cable':'Twin projector / 100 cm cable';

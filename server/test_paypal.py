@@ -32,6 +32,10 @@ class PayPalTests(unittest.TestCase):
         paypal.record_order(row,self.order(status='PENDING'))
         with paypal.connect() as db:self.assertEqual(db.execute('SELECT state FROM orders').fetchone()[0],'paid')
     def test_http_checkout_and_duplicate_capture(self):
+        self.checkout_flow("venmo")
+    def test_wallet_shipping_and_duplicate_capture(self):
+        self.checkout_flow("googlepay")
+    def checkout_flow(self,flow):
         import threading, urllib.request
         server=paypal.ThreadingHTTPServer(('127.0.0.1',0),paypal.Handler)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
@@ -56,7 +60,7 @@ class PayPalTests(unittest.TestCase):
                 with self.assertRaises(urllib.error.HTTPError) as blocked:
                     post('create',{'kit':'single','color':'blue','quantity':1},origin='https://untrusted.example')
                 self.assertEqual(blocked.exception.code,403)
-                data,cookie=post('create',{'kit':'single','color':'blue','quantity':1,'total':1,'flow':'venmo'})
+                data,cookie=post('create',{'kit':'single','color':'blue','quantity':1,'total':1,'flow':flow,'shipping':{'name':{'full_name':'Test Buyer'},'address':{'address_line_1':'1 Test Street','postal_code':'46214','country_code':'US'}}})
                 self.assertEqual(data['id'],'ORDER12345')
                 data,_=post('review',{'orderID':'ORDER12345'},cookie)
                 self.assertEqual(data['total'],'39.99')

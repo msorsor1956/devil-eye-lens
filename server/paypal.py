@@ -102,6 +102,18 @@ def bootstrap():
         webhook_id = hook['id']
         ready = True
         print('PayPal live credentials verified; webhook connected; checkout ready', flush=True)
+        try:
+            with urlopen('https://paypalobjects.com/devdoc/apple-pay/well-known/apple-developer-merchantid-domain-association', timeout=15) as response:
+                association = response.read(200000)
+            if association and len(association) < 200000:
+                os.makedirs('/usr/share/nginx/html/.well-known', exist_ok=True)
+                target = '/usr/share/nginx/html/.well-known/apple-developer-merchantid-domain-association'
+                with open(target, 'wb') as file: file.write(association)
+                os.chmod('/usr/share/nginx/html/.well-known', 0o755)
+                os.chmod(target, 0o644)
+                print('Apple Pay association file ready for domain registration', flush=True)
+        except Exception:
+            print('Apple Pay association file could not be prepared', flush=True)
     except Exception as error:
         print('PayPal setup unavailable: ' + type(error).__name__ + (' HTTP ' + str(error.code) if isinstance(error, HTTPError) else ''), flush=True)
 
@@ -146,6 +158,14 @@ class Handler(BaseHTTPRequestHandler):
             session_hash = hashlib.sha256(session.encode()).hexdigest()
             if self.path == '/api/paypal/create':
                 kit, color, quantity, total = selection(data)
+                wallet_shipping = None
+                if data.get('flow') in {'applepay','googlepay'}:
+                    wallet_shipping = data.get('shipping', {})
+                    address = wallet_shipping.get('address', {})
+                    if address.get('country_code') not in {'US','CA'} or not address.get('address_line_1') or not address.get('postal_code') or not wallet_shipping.get('name', {}).get('full_name'):
+                        raise ValueError('Valid USA or Canada shipping address required')
+                    if len(json.dumps(wallet_shipping)) > 3000:
+                        raise ValueError('Shipping address too long')
                 local_id = 'NE-' + secrets.token_hex(12).upper()
                 with connect() as db:
                     count = db.execute('SELECT count(*) FROM orders WHERE session=? AND created>?', (session_hash, int(time.time()) - 60)).fetchone()[0]
@@ -159,11 +179,13 @@ class Handler(BaseHTTPRequestHandler):
                         'amount': {'currency_code': 'USD', 'value': money(total), 'breakdown': {'item_total': {'currency_code': 'USD', 'value': money(total - 999)}, 'shipping': {'currency_code': 'USD', 'value': '9.99'}}}}],
                     'payment_source': {'paypal': {'experience_context': {'brand_name': 'Night Eyes', 'user_action': 'CONTINUE', 'shipping_preference': 'GET_FROM_FILE', 'return_url': ORIGIN + '/paypal-return.html', 'cancel_url': ORIGIN + '/paypal-return.html?cancelled=1'}}}
                 }
-                if data.get('flow') == 'venmo':
+                if data.get('flow') in {'venmo','card','applepay','googlepay'}:
                     # The PayPal JS SDK supplies the buyer-selected Venmo source.
                     payload.pop('payment_source')
+                if wallet_shipping:
+                    payload['purchase_units'][0]['shipping'] = wallet_shipping
                 order = api('/v2/checkout/orders', payload, local_id)
-                if data.get('flow') == 'venmo':
+                if data.get('flow') in {'venmo','card','applepay','googlepay'}:
                     with connect() as db:
                         db.execute('UPDATE orders SET paypal_id=? WHERE id=?', (order['id'], local_id))
                     return self.reply(200, {'id': order['id']}, session)

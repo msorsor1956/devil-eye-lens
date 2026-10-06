@@ -54,8 +54,7 @@ jobs:
                   response = error
               assert response.status == expected, (path, method, response.status)
               assert response.headers['X-Content-Type-Options'] == 'nosniff', path
-              assert response.headers['X-Frame-Options'] == 'DENY', path
-              assert "frame-ancestors 'none'" in response.headers['Content-Security-Policy'], path
+              assert "frame-ancestors 'self' https://mail.zoho.com" in response.headers['Content-Security-Policy'], path
           print('Public pages, missing paths, disallowed methods and headers verified.')
           PY
       - uses: actions/setup-node@v4

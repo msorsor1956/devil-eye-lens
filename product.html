@@ -33,7 +33,7 @@
     <script src="depth.js?v=20261005" defer></script>
 
     <script src="checkout-config.js?v=20261005-prices" defer></script>
-    <script src="product.js?v=20261006-layer" defer></script>
+    <script src="product.js?v=20261006-wallets" defer></script>
   </head>
   <body>
     <noscript><p class="noscript-note">You can browse all product details. Enable JavaScript to preview colors and review a kit.</p></noscript>
@@ -161,8 +161,11 @@
           <strong id="checkout-price">$39.99 before tax</strong>
         </div>
         <div class="payment-methods">
-          <button class="pay-button pay-button--venmo" id="venmo-checkout" type="button" aria-describedby="checkout-status"><span>Pay with Venmo<small>Secure checkout through PayPal</small></span><span aria-hidden="true">→</span></button><div id="venmo-buttons" hidden></div>
-          <button class="pay-button pay-button--stripe" id="stripe-checkout" type="button" aria-disabled="true"><span>Pay with card<small>Secure checkout through Stripe</small></span><span aria-hidden="true">→</span></button>
+          <button class="pay-button pay-button--venmo" id="venmo-checkout" type="button" aria-describedby="checkout-status"><span>Pay with Venmo<small>Secure checkout through PayPal</small></span><span aria-hidden="true">→</span></button><div id="venmo-buttons" class="provider-buttons" hidden></div>
+          <button class="pay-button pay-button--stripe" id="card-checkout" type="button"><span>Pay with card<small>Secure checkout through PayPal</small></span><span aria-hidden="true">→</span></button>
+          <div id="card-buttons" class="provider-buttons" hidden></div>
+          <button class="pay-button pay-button--wallet" id="applepay-checkout" type="button"><span>Apple Pay<small>Through PayPal · eligible devices</small></span><span aria-hidden="true">→</span></button><div id="applepay-buttons" class="provider-buttons" hidden></div>
+          <button class="pay-button pay-button--wallet" id="googlepay-checkout" type="button"><span>Google Pay<small>Through PayPal · eligible devices</small></span><span aria-hidden="true">→</span></button><div id="googlepay-buttons" class="provider-buttons" hidden></div>
           <button class="pay-button pay-button--cash" id="cashapp-checkout" type="button" aria-disabled="true"><span>Pay with Cash App<small>Cash App Pay</small></span><span aria-hidden="true">→</span></button>
         </div>
         <p class="checkout-status" id="checkout-status" role="status">Online ordering is not available yet. Review your selection here.</p>

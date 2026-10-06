@@ -40,6 +40,13 @@
     const data=JSON.parse(localStorage.getItem('devil-eye-kit')||'null');
     if(data && colors[data.color]) {$('#remember-kit').checked=true;selectColor(data.color);if([...kit.options].some(o=>o.value===data.kit))kit.value=data.kit;if(Number.isInteger(data.quantity)&&data.quantity>=1&&data.quantity<=10)quantity.value=data.quantity;}
   } catch { /* Storage is optional; browsing remains available. */ }
+  const incoming=new URLSearchParams(location.search);
+  if(incoming.get('checkout')==='1') {
+    const color=Object.keys(colors).find(name=>colors[name].key===incoming.get('color'));
+    if(color)selectColor(color);
+    const requested=incoming.get('kit');if(['single','twin'].includes(requested))kit.value=requested==='single'?'Single projector / 55 cm cable':'Twin projector / 100 cm cable';
+    const count=Number(incoming.get('quantity'));if(Number.isInteger(count)&&count>=1&&count<=10)quantity.value=count;
+  }
   $$('[data-image]').forEach(b=>{
     b.setAttribute('aria-pressed',String(b.classList.contains('is-selected')));
     b.addEventListener('click',()=>{ $$('[data-image]').forEach(item=>{const active=item===b;item.classList.toggle('is-selected',active);item.setAttribute('aria-pressed',String(active));});$('#product-main-image').src=b.dataset.image;$('#product-main-image').alt=b.dataset.alt;});
@@ -50,71 +57,89 @@
   [kit,quantity].forEach(el=>el.addEventListener('change',save));
   quantity.addEventListener('input',()=>quantity.setCustomValidity(''));
   let paypalReady = false;
-  let venmoLoaded = false;
-  let checkoutError = '';
-  function restoreCheckout() {
-    if (!dialog.open) dialog.showModal();
-    document.body.classList.add('dialog-open');
-  }
-  const venmoButton = $('#venmo-checkout');
+  let sdkPromise;
   const status = $('#checkout-status');
-  async function paymentRequest(action, body) {
-    const response = await fetch('/api/paypal/' + action, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Payment is temporarily unavailable.');
-    return data;
+  function restoreCheckout() {if(!dialog.open)dialog.showModal();document.body.classList.add('dialog-open');}
+  function releaseCheckout() {dialog.close();document.body.classList.remove('dialog-open');}
+  const selection=()=>({kit:kit.value.startsWith('Single')?'single':'twin',color:colors[selectedColor].key,quantity:Number(quantity.value)});
+  async function paymentRequest(action,body) {
+    const response=await fetch('/api/paypal/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await response.json();if(!response.ok)throw new Error(data.error||'Payment is temporarily unavailable.');return data;
   }
-  fetch('/api/paypal/health').then(r=>r.json()).then(data=>{paypalReady = data.ready === true;}).catch(()=>{});
-  venmoButton.addEventListener('click', async()=>{
-    if (!validQuantity()) return;
-    if (venmoLoaded) { $('#venmo-buttons').hidden = false; return; }
-    venmoButton.disabled = true;
-    status.textContent = 'Checking Venmo availability…';
+  function loadScript(src) {return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('Unable to load the payment service. Please try again.'));};document.head.append(script);});}
+  function loadPayPal() {
+    if(!sdkPromise)sdkPromise=(async()=>{const response=await fetch('/api/paypal/config');const data=await response.json();if(!response.ok||!data.clientId)throw new Error('Payment connection temporarily unavailable.');await loadScript('https://www.paypal.com/sdk/js?'+new URLSearchParams({'client-id':data.clientId,currency:'USD',intent:'capture',components:'buttons,applepay,googlepay','enable-funding':'venmo'}));})().catch(e=>{sdkPromise=null;throw e;});return sdkPromise;
+  }
+  function showResult(result) {restoreCheckout();status.textContent=result.status==='paid'?'Payment received. Thank you! Order reference: '+result.reference:'Payment status: '+result.status+'. Contact support with reference '+result.reference+' before paying again.';$$('.provider-buttons').forEach(e=>e.hidden=true);}
+  fetch('/api/paypal/health').then(r=>r.json()).then(d=>{paypalReady=d.ready===true;}).catch(()=>{});
+  for(const method of ['venmo','card']) {
+    const button=$('#'+method+'-checkout'),container=$('#'+method+'-buttons');let rendered=false;
+    button.addEventListener('click',async()=>{
+      if(!validQuantity())return;if(rendered){container.hidden=false;return;}button.disabled=true;status.textContent='Checking '+method+' availability…';
+      let errorMessage='';
+      try {await loadPayPal();const buttons=paypal.Buttons({fundingSource:method==='venmo'?paypal.FUNDING.VENMO:paypal.FUNDING.CARD,style:{layout:'vertical',height:40,shape:'rect'},onClick:()=>{if(method==='venmo')releaseCheckout();},
+        createOrder:async()=>{errorMessage='';try{return (await paymentRequest('create',{...selection(),flow:method})).id;}catch(e){errorMessage=e.message;throw e;}},
+        onApprove:async data=>{try{showResult(await paymentRequest('capture',{orderID:data.orderID}));}catch(e){restoreCheckout();status.textContent=e.message;}},
+        onCancel:()=>{restoreCheckout();status.textContent='Checkout cancelled. You can try again when ready.';},
+        onError:()=>{restoreCheckout();status.textContent=errorMessage||'Checkout could not be completed. If you approved payment, contact support before paying again.';}});
+        if(!buttons.isEligible())throw new Error(method==='venmo'?'Venmo is unavailable for this device or account. Try another payment method.':'PayPal card checkout is unavailable for this device or account.');
+        container.hidden=false;await buttons.render(container);rendered=true;status.textContent='Continue with the secure payment button below.';
+      }catch(e){status.textContent=e.message;}finally{button.disabled=false;}
+    });
+  }
+  function shipping(name,lines,city,state,postal,country){return {name:{full_name:name},address:{address_line_1:lines[0]||'',address_line_2:lines.slice(1).join(' '),admin_area_2:city,admin_area_1:state,postal_code:postal,country_code:country.toUpperCase()}};}
+  $('#applepay-checkout').addEventListener('click',async()=>{
+    const container=$('#applepay-buttons');if(container.childElementCount){container.hidden=false;return;}
+    status.textContent='Checking Apple Pay availability…';
     try {
-      const response = await fetch('/api/paypal/config');
-      const config = await response.json();
-      if (!response.ok || !config.clientId) throw new Error('Venmo is temporarily unavailable while our payment connection is being completed. Please contact support@nighteyes.pro.');
-      if (!window.paypal) await new Promise((resolve,reject)=>{
-        const script=document.createElement('script');
-        script.src='https://www.paypal.com/sdk/js?'+new URLSearchParams({'client-id':config.clientId,currency:'USD',intent:'capture',components:'buttons','enable-funding':'venmo'});
-        script.onload=resolve;script.onerror=()=>{script.remove();reject(new Error('Unable to load Venmo. Please try again.'));};document.head.append(script);
-      });
-      const buttons = window.paypal.Buttons({
-        fundingSource: window.paypal.FUNDING.VENMO,
-        // Native modal dialogs occupy the browser top layer above SDK overlays.
-        onClick:()=>{dialog.close();document.body.classList.remove('dialog-open');},
-        style:{layout:'vertical',height:48,shape:'rect'},
-        createOrder:async()=>{
-          checkoutError = '';
-          try {
-            const result=await paymentRequest('create',{kit:kit.value.startsWith('Single')?'single':'twin',color:colors[selectedColor].key,quantity:Number(quantity.value),flow:'venmo'});
-            return result.id;
-          } catch(error) { checkoutError=error.message; status.textContent=checkoutError; throw error; }
-        },
-        onApprove:async data=>{
-          restoreCheckout();
-          status.textContent='Confirming your Venmo payment…';
-          try {
-            const result=await paymentRequest('capture',{orderID:data.orderID});
-            status.textContent=result.status==='paid'?'Payment received. Thank you! Order reference: '+result.reference:'Payment status: '+result.status+'. Contact support with order reference '+result.reference+' before paying again.';
-            $('#venmo-buttons').hidden=true;venmoButton.disabled=true;
-          } catch(error) {status.textContent=error.message;}
-        },
-        onCancel:()=>{restoreCheckout();status.textContent='Venmo checkout cancelled. You can try again when ready.';},
-        onError:()=>{restoreCheckout();status.textContent=checkoutError || 'Venmo could not complete checkout. If you approved a payment, contact support before trying again.';}
-      });
-      if (!buttons.isEligible()) throw new Error('Venmo is not available for this device or account. Venmo checkout is available to eligible US customers.');
-      $('#venmo-buttons').hidden=false;
-      await buttons.render('#venmo-buttons');
-      venmoLoaded=true;
-      status.textContent='Continue with the secure Venmo button below. Your kit and $9.99 shipping are included.';
-    } catch(error) {status.textContent=error.message;}
-    finally {venmoButton.disabled=false;}
+      await loadPayPal();await loadScript('https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js');
+      const apple=paypal.Applepay(),settings=await apple.config();
+      if(!settings.isEligible||!window.ApplePaySession||!ApplePaySession.canMakePayments())throw new Error('Apple Pay is not available for this device or merchant yet. Choose Venmo or card.');
+      const button=document.createElement('apple-pay-button');button.setAttribute('buttonstyle','black');button.setAttribute('type','buy');button.setAttribute('locale','en-US');
+      button.addEventListener('click',()=>{
+        if(!validQuantity())return;const cart=selection(),amount=((config.prices[cart.kit]*cart.quantity+config.shipping)/100).toFixed(2);
+        const session=new ApplePaySession(4,{countryCode:settings.countryCode,merchantCapabilities:settings.merchantCapabilities,supportedNetworks:settings.supportedNetworks,currencyCode:'USD',requiredShippingContactFields:['name','email','postalAddress'],requiredBillingContactFields:['postalAddress'],total:{label:'Night Eyes',type:'final',amount}});
+        releaseCheckout();
+        session.onvalidatemerchant=async event=>{try{const result=await apple.validateMerchant({validationUrl:event.validationURL,displayName:'Night Eyes'});session.completeMerchantValidation(result.merchantSession);}catch(e){session.abort();restoreCheckout();status.textContent='Apple Pay domain verification is not complete. Please use another payment method.';}};
+        session.oncancel=()=>{restoreCheckout();status.textContent='Apple Pay cancelled.';};
+        session.onpaymentauthorized=async event=>{
+          try{const c=event.payment.shippingContact;const order=await paymentRequest('create',{...cart,flow:'applepay',shipping:shipping([c.givenName,c.familyName].filter(Boolean).join(' '),c.addressLines,c.locality,c.administrativeArea,c.postalCode,c.countryCode)});
+            await apple.confirmOrder({orderId:order.id,token:event.payment.token,billingContact:event.payment.billingContact});
+            const result=await paymentRequest('capture',{orderID:order.id});session.completePayment(ApplePaySession.STATUS_SUCCESS);showResult(result);
+          }catch(e){session.completePayment(ApplePaySession.STATUS_FAILURE);restoreCheckout();status.textContent=e.message;}
+        };session.begin();
+      });container.append(button);container.hidden=false;status.textContent='Continue using Apple Pay below.';
+    }catch(e){status.textContent=e.message;}
   });
+  $('#googlepay-checkout').addEventListener('click',async()=>{
+    const container=$('#googlepay-buttons');if(container.childElementCount){container.hidden=false;return;}
+    status.textContent='Checking Google Pay availability…';
+    try{
+      await loadPayPal();await loadScript('https://pay.google.com/gp/p/js/pay.js');const gateway=paypal.Googlepay(),settings=await gateway.config();let cart;
+      if(settings.isEligible===false)throw new Error('Google Pay is not available for this merchant yet. Choose another method.');
+      const client=new google.payments.api.PaymentsClient({environment:'PRODUCTION',paymentDataCallbacks:{onPaymentAuthorized:async data=>{
+        try{const c=data.shippingAddress;const order=await paymentRequest('create',{...cart,flow:'googlepay',shipping:shipping(c.name,[c.address1,c.address2,c.address3].filter(Boolean),c.locality,c.administrativeArea,c.postalCode,c.countryCode)});
+          const confirmation=await gateway.confirmOrder({orderId:order.id,paymentMethodData:data.paymentMethodData});
+          if(confirmation.status==='PAYER_ACTION_REQUIRED')await gateway.initiatePayerAction({orderId:order.id});
+          const result=await paymentRequest('capture',{orderID:order.id});showResult(result);return {transactionState:'SUCCESS'};
+        }catch(e){return {transactionState:'ERROR',error:{intent:'PAYMENT_AUTHORIZATION',message:e.message}};}
+      }}});
+      const base={apiVersion:2,apiVersionMinor:0,allowedPaymentMethods:settings.allowedPaymentMethods};
+      if(!(await client.isReadyToPay(base)).result)throw new Error('Google Pay is not available on this device. Choose another method.');
+      container.append(client.createButton({buttonType:'pay',onClick:()=>{if(!validQuantity())return;cart=selection();releaseCheckout();client.loadPaymentData({...base,merchantInfo:settings.merchantInfo,callbackIntents:['PAYMENT_AUTHORIZATION'],emailRequired:true,shippingAddressRequired:true,shippingAddressParameters:{allowedCountryCodes:['US','CA']},transactionInfo:{currencyCode:'USD',countryCode:'US',totalPriceStatus:'FINAL',totalPrice:((config.prices[cart.kit]*cart.quantity+config.shipping)/100).toFixed(2)}}).catch(()=>{restoreCheckout();status.textContent='Google Pay was cancelled or unavailable. If you approved payment, contact support before paying again.';});},allowedPaymentMethods:settings.allowedPaymentMethods}));
+      container.hidden=false;status.textContent='Continue using Google Pay below.';
+    }catch(e){status.textContent='Google Pay is unavailable: '+e.message;}
+  });
+  const cashButton=$('#cashapp-checkout');
+  if (window.self !== window.top) {
+    const external=document.createElement('a');external.className='pay-button pay-button--venmo';external.textContent='Open secure checkout in a new tab ↗';external.target='_blank';external.rel='noopener noreferrer';
+    const updateExternal=()=>{const cart=selection();external.href='https://www.nighteyes.pro/?'+new URLSearchParams({checkout:'1',kit:cart.kit,color:cart.color,quantity:String(cart.quantity)})+'#series';};
+    updateExternal();[kit,quantity].forEach(e=>e.addEventListener('change',updateExternal));$$('[data-color],[data-preview]').forEach(e=>e.addEventListener('click',updateExternal));
+    $('.payment-methods').replaceChildren(external);
+    status.textContent='For secure payment, open checkout in a separate browser tab.';
+  }
   const enabled=0;
-  [['#stripe-checkout','Card checkout is not available yet.'],['#cashapp-checkout','Cash App checkout is not available yet.']].forEach(([id,message])=>{
-    $(id).addEventListener('click',()=>{status.textContent=message+' Please contact support@nighteyes.pro.';});
-  });
+  cashButton.addEventListener('click',()=>{status.textContent='Cash App checkout is not available yet. Please use another payment option.';});
   const money=cents=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100);
   function updatePrice(){
     const unit=config.prices?.[({'Single projector / 55 cm cable':'single','Twin projector / 100 cm cable':'twin'})[kit.value]];
@@ -132,6 +157,7 @@
     $('#checkout-status').textContent=paypalReady?'Choose Venmo to check availability for your device and account. Your kit and $9.99 shipping carry into checkout.':enabled?'Verify your kit, color, quantity and total on the payment page. Your selection is not automatically transferred.':`Online ordering is not available yet. ${saved?'Your kit is saved on this device.':$('#remember-kit').checked?'Your selection remains on this page; browser storage is unavailable.':'Your selection is not saved on this device.'}`;
     dialog.showModal();document.body.classList.add('dialog-open');
   }));
+  if(incoming.get('checkout')==='1') $('[data-open-checkout]').click();
   $$('dialog').forEach(d=>{d.addEventListener('close',()=>document.body.classList.remove('dialog-open'));d.addEventListener('click',e=>{const r=d.getBoundingClientRect();if(e.target===d&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom))d.close();});});
   $('#zoom-product').addEventListener('click',()=>{$('#enlarged-image').src=$('#product-main-image').src;$('#enlarged-image').alt=$('#product-main-image').alt;$('#image-dialog').showModal();document.body.classList.add('dialog-open');});
   $('#preview-blink').addEventListener('click',()=>{

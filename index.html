@@ -33,7 +33,7 @@
     <script src="depth.js?v=20261005" defer></script>
 
     <script src="checkout-config.js?v=20261005-prices" defer></script>
-    <script src="product.js?v=20261006-wallets" defer></script>
+    <script src="product.js?v=20261006-checkout" defer></script>
   </head>
   <body>
     <noscript><p class="noscript-note">You can browse all product details. Enable JavaScript to preview colors and review a kit.</p></noscript>
@@ -98,7 +98,7 @@
             </div>
             <label class="remember-kit"><input id="remember-kit" type="checkbox"> Remember my kit on this device <a href="privacy.html">Privacy</a></label>
             <button class="product-buy" type="button" data-open-checkout>Review &amp; checkout <span>→</span></button>
-            <p class="availability-note" id="availability-note" role="status">Online ordering is being prepared. Explore your kit and review the details below.</p><p class="purchase-note">Remote included · Check fitment before ordering</p><p class="purchase-note"><a href="shipping-returns.html">Shipping &amp; returns</a> · <a href="terms.html">Terms &amp; conditions</a></p>
+            <p class="availability-note" id="availability-note" role="status">Secure checkout · Review your shipping address, tax and total before paying.</p><p class="purchase-note">Remote included · Check fitment before ordering</p><p class="purchase-note"><a href="shipping-returns.html">Shipping &amp; returns</a> · <a href="terms.html">Terms &amp; conditions</a></p>
           </div>
         </div>
 
@@ -138,7 +138,7 @@
       </section>
 
       <section class="fitment-guide" id="fitment" aria-labelledby="fitment-title"><div><p class="eyebrow">PLAN YOUR INSTALL</p><h2 id="fitment-title">A great build<br>starts with the fit.</h2><p>Universal application does not guarantee a direct fit. Check your vehicle’s setup with your installer.</p><a class="hero-film-link" href="#series">Choose your kit ↗</a></div><ol><li><span>01</span><div><h3>Check the power</h3><p>Confirm a compatible 12V supply and safe wiring.</p></div></li><li><span>02</span><div><h3>Measure your space</h3><p>Verify housing clearance, mounting points and cable routing.</p></div></li><li><span>03</span><div><h3>Choose single or twin</h3><p>Single kit: 55 cm cable. Twin kit: 100 cm cable.</p></div></li><li><span>04</span><div><h3>Plan the finishing touches</h3><p>Decorative lighting should be installed for its intended use. Confirm local requirements with your installer.</p></div></li></ol></section>
-      <section class="questions-section" id="questions" aria-labelledby="questions-title"><div><h2 id="questions-title">Before you<br>make it yours.</h2><p>Good questions. Clear answers.</p></div><div class="question-list"><details><summary>Is this a replacement headlight?</summary><p>No. This product is decorative automotive ambient lighting. It does not replace required vehicle lighting.</p></details><details><summary>What comes with each kit?</summary><p>The single projector kit has a 55 cm cable. The twin projector kit has a 100 cm cable. A remote control is included; use the kit photos to compare the components.</p></details><details><summary>Which eye colors are available?</summary><p>Blue, green, purple and red are listed lighting modes. Preview imagery is illustrative; colors can look different in your installation.</p></details><details><summary>Can I order online now?</summary><p id="ordering-answer">Online ordering is not available yet. Pricing and payment options will appear when configured. You can choose to remember a kit selection on this device.</p></details><details><summary>What about warranty and delivery?</summary><p>The product record lists a one-year warranty. Shipping costs, delivery estimates, return terms and warranty conditions must be confirmed before payment. Package dimensions are 19 × 13 × 8 cm; these describe the box, not installation clearance.</p></details></div></section>
+      <section class="questions-section" id="questions" aria-labelledby="questions-title"><div><h2 id="questions-title">Before you<br>make it yours.</h2><p>Good questions. Clear answers.</p></div><div class="question-list"><details><summary>Is this a replacement headlight?</summary><p>No. This product is decorative automotive ambient lighting. It does not replace required vehicle lighting.</p></details><details><summary>What comes with each kit?</summary><p>The single projector kit has a 55 cm cable. The twin projector kit has a 100 cm cable. A remote control is included; use the kit photos to compare the components.</p></details><details><summary>Which eye colors are available?</summary><p>Blue, green, purple and red are listed lighting modes. Preview imagery is illustrative; colors can look different in your installation.</p></details><details><summary>Can I order online now?</summary><p id="ordering-answer">Yes. Choose your kit and continue to checkout to review customer details, shipping, tax and the final total. Payment options depend on your device and account.</p></details><details><summary>What about warranty and delivery?</summary><p>The product record lists a one-year warranty. Shipping costs, delivery estimates, return terms and warranty conditions must be confirmed before payment. Package dimensions are 19 × 13 × 8 cm; these describe the box, not installation clearance.</p></details></div></section>
       <section class="closing-section"><p>Made to stand apart.</p><a href="#series">Make the first<br>look count. <span>↗</span></a></section>
     </main>
 
@@ -148,30 +148,6 @@
       <p><a class="footer-link" href="#series">Shop Devil's Eye</a></p>
     </footer>
 
-    <dialog class="checkout-dialog" id="checkout-dialog" aria-labelledby="checkout-title">
-      <form method="dialog" class="checkout-shell">
-        <button class="checkout-close" value="cancel" aria-label="Close checkout">×</button>
-        <div class="checkout-heading">
-          <p class="eyebrow">YOUR KIT SELECTION</p>
-          <h2 id="checkout-title">Your Devil's Eye</h2>
-        </div>
-        <div class="order-summary">
-          <img src="assets/sections/devil-eye-blue.webp" alt="" id="checkout-image">
-          <div><strong id="checkout-variant">Electric blue</strong><span id="checkout-kit">Single projector · 55 cm cable</span><span id="checkout-quantity">Quantity 1</span></div>
-          <strong id="checkout-price">$39.99 before tax</strong>
-        </div>
-        <div class="payment-methods">
-          <button class="pay-button pay-button--venmo" id="venmo-checkout" type="button" aria-describedby="checkout-status"><span>Pay with Venmo<small>Secure checkout through PayPal</small></span><span aria-hidden="true">→</span></button><div id="venmo-buttons" class="provider-buttons" hidden></div>
-          <button class="pay-button pay-button--stripe" id="card-checkout" type="button"><span>Pay with card<small>Secure checkout through PayPal</small></span><span aria-hidden="true">→</span></button>
-          <div id="card-buttons" class="provider-buttons" hidden></div>
-          <button class="pay-button pay-button--wallet" id="applepay-checkout" type="button"><span>Apple Pay<small>Through PayPal · eligible devices</small></span><span aria-hidden="true">→</span></button><div id="applepay-buttons" class="provider-buttons" hidden></div>
-          <button class="pay-button pay-button--wallet" id="googlepay-checkout" type="button"><span>Google Pay<small>Through PayPal · eligible devices</small></span><span aria-hidden="true">→</span></button><div id="googlepay-buttons" class="provider-buttons" hidden></div>
-          <button class="pay-button pay-button--cash" id="cashapp-checkout" type="button" aria-disabled="true"><span>Pay with Cash App<small>Cash App Pay</small></span><span aria-hidden="true">→</span></button>
-        </div>
-        <p class="checkout-status" id="checkout-status" role="status">Online ordering is not available yet. Review your selection here.</p>
-        <p class="checkout-legal">Payment opens in the provider's secure checkout. Never enter card information directly on this page.</p>
-      </form>
-    </dialog>
     <a class="mobile-buy" href="#series"><span>DEVIL / EYE</span><strong>Build your kit ↗</strong></a>
     <dialog id="image-dialog" class="image-dialog" aria-label="Enlarged product image"><form method="dialog"><button class="checkout-close" aria-label="Close enlarged image">×</button></form><img id="enlarged-image" src="assets/product/installed-blue.webp" alt=""></dialog>
   </body>

@@ -4,7 +4,7 @@
   "description": "Night Eyes static storefront and on-demand Three.js product preview",
   "scripts": {
     "build": "esbuild src/showroom.js --bundle --minify --format=iife --outfile=assets/scene/showroom.js",
-    "check": "node --check product.js && node --check privacy.js && node --check assets/scene/showroom.js"
+    "check": "node --check checkout.js && node --check product.js && node --check privacy.js && node --check assets/scene/showroom.js"
   },
   "repository": {
     "type": "git",

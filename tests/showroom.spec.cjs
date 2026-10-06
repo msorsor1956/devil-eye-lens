@@ -7,7 +7,7 @@ test('responsive layout and kit selection',async({page})=>{
   const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,overflow:[...document.querySelectorAll('body *')].map(e=>({tag:e.tagName,cls:e.className,left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right})).filter(e=>e.right>innerWidth+1||e.left < -1)}));expect(layout.scroll,JSON.stringify(layout)).toBeLessThanOrEqual(width);
  }
  await page.getByRole('button',{name:'Green',exact:true}).click();await expect(page.locator('#selected-color')).toHaveText('Acid green');
- await page.locator('#quantity').fill('2');await page.locator('[data-open-checkout]').click();await expect(page.locator('#checkout-dialog')).toBeVisible();await expect(page.locator('#checkout-quantity')).toHaveText('Quantity 2');await expect(page.locator('#card-checkout')).toBeVisible();await page.keyboard.press('Escape');
+ await page.locator('#quantity').fill('2');await page.locator('[data-open-checkout]').click();await expect(page).toHaveURL(/checkout.html/);await expect(page.locator('#order-quantity')).toHaveValue('2');await expect(page.locator('#order-color')).toHaveValue('green');await expect(page.getByRole('button',{name:'Pay with card',exact:false})).toBeVisible();await page.goto('http://127.0.0.1:8080');
  await page.setViewportSize({width:390,height:844});await page.locator('#menu-toggle').click();await expect(page.locator('#mobile-navigation')).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('#mobile-navigation')).toBeHidden();expect(errors).toEqual([]);
 });
 test('3D starts automatically, rotates and resets',async({page})=>{

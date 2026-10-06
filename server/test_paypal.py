@@ -45,25 +45,37 @@ class PayPalTests(unittest.TestCase):
                 self.assertNotIn('payment_source',body)
                 purchase.update(body['purchase_units'][0])
                 return {'id':'ORDER12345','links':[{'rel':'payer-action','href':'https://www.paypal.com/checkoutnow?token=ORDER12345'}]}
-            unit={**purchase,'shipping':{'address':{'country_code':'CA'}}}
+            unit={**purchase}
             if path.endswith('/capture'):
                 captured.append(request_id)
-                unit['payments']={'captures':[{'id':'CAPTURE123','status':'COMPLETED','amount':{'currency_code':'USD','value':'39.99'}}]}
+                unit['payments']={'captures':[{'id':'CAPTURE123','status':'COMPLETED','amount':{'currency_code':'USD','value':'42.79'}}]}
                 return {'status':'COMPLETED','purchase_units':[unit]}
             return {'status':'APPROVED','purchase_units':[unit]}
         def post(path,data,cookie='',origin='https://nighteyes.pro'):
             req=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/api/paypal/'+path,data=json.dumps(data).encode(),headers={'Origin':origin,'Cookie':cookie})
             with urllib.request.urlopen(req) as response:return json.load(response), response.headers.get('Set-Cookie','').split(';')[0]
         try:
-            with patch.object(paypal,'ready',True),patch.object(paypal,'api',side_effect=fake_api):
+            with patch.object(paypal,'ready',True),patch.object(paypal,'api',side_effect=fake_api),patch.object(paypal.checkout_tax,'calculate',return_value={'id':'taxcalc_test','amount_total':4279,'tax_amount_exclusive':280,'expires_at':9999999999}):
                 import urllib.error
                 with self.assertRaises(urllib.error.HTTPError) as blocked:
                     post('create',{'kit':'single','color':'blue','quantity':1},origin='https://untrusted.example')
                 self.assertEqual(blocked.exception.code,403)
-                data,cookie=post('create',{'kit':'single','color':'blue','quantity':1,'total':1,'flow':flow,'shipping':{'name':{'full_name':'Test Buyer'},'address':{'address_line_1':'1 Test Street','postal_code':'46214','country_code':'US'}}})
+                customer={'firstName':'Test','lastName':'Buyer','email':'buyer@example.com','phone':'','line1':'1 Test Street','line2':'','city':'Indianapolis','state':'IN','postal':'46214','country':'US'}
+                quote,cookie=post('quote',{'kit':'single','color':'blue','quantity':1,'total':1,'customer':customer})
+                self.assertEqual(quote['total'],4279)
+                self.assertEqual(quote['tax'],280)
+                checkout={'quoteID':quote['quoteID'],'flow':flow,'acceptedTerms':True,'policyVersion':paypal.checkout_tax.POLICY_VERSION,'total':1}
+                with self.assertRaises(urllib.error.HTTPError) as stolen: post('create',checkout)
+                self.assertEqual(stolen.exception.code,400)
+                with self.assertRaises(urllib.error.HTTPError): post('create',{**checkout,'acceptedTerms':False},cookie)
+                data,_=post('create',checkout,cookie)
                 self.assertEqual(data['id'],'ORDER12345')
+                same,_=post('create',checkout,cookie)
+                self.assertEqual(same['id'],data['id'])
+                self.assertEqual(purchase['amount']['breakdown']['tax_total']['value'],'2.80')
+                self.assertEqual(purchase['amount']['value'],'42.79')
                 data,_=post('review',{'orderID':'ORDER12345'},cookie)
-                self.assertEqual(data['total'],'39.99')
+                self.assertEqual(data['total'],'42.79')
                 for _ in range(2):
                     data,_=post('capture',{'orderID':'ORDER12345'},cookie)
                     self.assertEqual(data['status'],'paid')

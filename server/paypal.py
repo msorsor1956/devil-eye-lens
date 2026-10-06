@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from urllib.parse import urlparse
+import checkout_tax
 
 ORIGIN = 'https://www.nighteyes.pro'
 ALLOWED_ORIGINS = {ORIGIN, 'https://nighteyes.pro', 'https://devil-eye-site-production.up.railway.app'}
@@ -29,6 +30,11 @@ def initialize():
     with connect() as db:
         db.execute('PRAGMA journal_mode=WAL')
         db.execute('CREATE TABLE IF NOT EXISTS orders (id TEXT PRIMARY KEY, paypal_id TEXT UNIQUE, session TEXT, kit TEXT, color TEXT, quantity INTEGER, total INTEGER, state TEXT, capture_id TEXT, shipping TEXT, email TEXT, created INTEGER)')
+        columns = {r[1] for r in db.execute('PRAGMA table_info(orders)')}
+        for name, kind in [('quote_id','TEXT'), ('tax','INTEGER DEFAULT 0'), ('tax_calculation','TEXT'), ('tax_transaction','TEXT'), ('customer','TEXT'), ('policy_version','TEXT')]:
+            if name not in columns: db.execute(f'ALTER TABLE orders ADD COLUMN {name} {kind}')
+        db.execute('CREATE UNIQUE INDEX IF NOT EXISTS order_quote ON orders(quote_id)')
+        db.execute('CREATE TABLE IF NOT EXISTS quotes (id TEXT PRIMARY KEY, session TEXT, payload TEXT, created INTEGER)')
         db.execute('CREATE TABLE IF NOT EXISTS events (id TEXT PRIMARY KEY, type TEXT, created INTEGER)')
 
 def token():
@@ -75,6 +81,12 @@ def record_order(row, order):
     shipping = unit.get('shipping', {})
     if shipping.get('address', {}).get('country_code') not in {'US', 'CA'}:
         raise ValueError('We currently ship only to the USA and Canada. No payment was captured by this request.')
+    if row['customer']:
+        expected = checkout_tax.shipping_for(json.loads(row['customer']))['address']
+        actual = shipping.get('address', {})
+        normalize = lambda value: re.sub(r'[^\w]', '', str(value)).casefold()
+        if any(normalize(actual.get(k, '')) != normalize(v) for k, v in expected.items()):
+            raise ValueError('Shipping address changed. Return to checkout and recalculate the total.')
     captures = unit.get('payments', {}).get('captures', [])
     state, capture_id = 'approved', None
     if captures:
@@ -85,8 +97,25 @@ def record_order(row, order):
         state = {'COMPLETED': 'paid', 'PENDING': 'pending', 'DECLINED': 'denied', 'REFUNDED': 'refunded', 'PARTIALLY_REFUNDED': 'partially_refunded'}.get(capture['status'], 'review')
     email = (order.get('payment_source', {}).get('venmo', {}).get('email_address') or order.get('payment_source', {}).get('paypal', {}).get('email_address')) or order.get('payer', {}).get('email_address')
     with connect() as db:
-        db.execute("UPDATE orders SET state=CASE WHEN state IN ('refunded','reversed','partially_refunded','refund_review') THEN state WHEN state='paid' AND ? IN ('approved','pending','denied') THEN state ELSE ? END,capture_id=COALESCE(?,capture_id),shipping=?,email=? WHERE id=?", (state, state, capture_id, json.dumps(shipping), email, row['id']))
+        db.execute("UPDATE orders SET state=CASE WHEN state IN ('refunded','reversed','partially_refunded','refund_review') THEN state WHEN state='paid' AND ? IN ('approved','pending','denied') THEN state ELSE ? END,capture_id=COALESCE(?,capture_id),shipping=?,email=COALESCE(email,?) WHERE id=?", (state, state, capture_id, json.dumps(shipping), email, row['id']))
     return state
+
+def sync_tax_records():
+    # Durable retry: a tax-reporting failure must never imply a successful payment failed.
+    while True:
+        try:
+            with connect() as db:
+                rows = db.execute("SELECT * FROM orders WHERE capture_id IS NOT NULL AND state IN ('paid','refunded','partially_refunded','refund_review','reversed') AND tax_calculation IS NOT NULL AND tax_transaction IS NULL LIMIT 20").fetchall()
+                db.execute('DELETE FROM quotes WHERE created < ?', (int(time.time()) - 10800,))
+            for row in rows:
+                try:
+                    result = checkout_tax.stripe_request('tax/transactions/create_from_calculation', {'calculation': row['tax_calculation'], 'reference': row['id'], 'posted_at': row['created']}, row['id'] + '-tax')
+                    with connect() as db: db.execute('UPDATE orders SET tax_transaction=? WHERE id=?', (result['id'], row['id']))
+                except Exception as error:
+                    print('Tax record requires retry: ' + row['id'] + ' ' + type(error).__name__, flush=True)
+        except Exception:
+            print('Tax reconciliation temporarily unavailable', flush=True)
+        time.sleep(60)
 
 def bootstrap():
     global ready, webhook_id
@@ -138,7 +167,7 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(404, {'error': 'Not found'})
     def do_POST(self):
         try:
-            if self.path not in {'/api/paypal/create', '/api/paypal/capture', '/api/paypal/review', '/api/paypal/webhook'}:
+            if self.path not in {'/api/paypal/quote', '/api/paypal/create', '/api/paypal/capture', '/api/paypal/review', '/api/paypal/webhook'}:
                 return self.reply(404, {'error': 'Not found'})
             if not ready:
                 return self.reply(503, {'error': 'PayPal is temporarily unavailable. Please try again later.'})
@@ -156,46 +185,67 @@ class Handler(BaseHTTPRequestHandler):
             cookie = SimpleCookie(self.headers.get('Cookie', ''))
             session = cookie['__Host-night-paypal'].value if '__Host-night-paypal' in cookie else secrets.token_urlsafe(32)
             session_hash = hashlib.sha256(session.encode()).hexdigest()
+            if self.path == '/api/paypal/quote':
+                kit, color, quantity, _ = selection(data)
+                customer = checkout_tax.customer_details(data)
+                with connect() as db:
+                    count = db.execute('SELECT count(*) FROM quotes WHERE session=? AND created>?', (session_hash, int(time.time()) - 60)).fetchone()[0]
+                if count >= 5:
+                    return self.reply(429, {'error': 'Please wait a minute before recalculating.'}, session)
+                quote_id = 'NQ-' + secrets.token_hex(24)
+                try:
+                    calculation = checkout_tax.calculate(customer, kit, quantity, PRICES[kit], quote_id)
+                except HTTPError as error:
+                    print('Tax calculation unavailable HTTP ' + str(error.code), flush=True)
+                    return self.reply(503, {'error': 'We could not calculate tax. Check your address or contact support@nighteyes.pro. No payment has been taken.'}, session)
+                quote = {'kit':kit, 'color':color, 'quantity':quantity, 'customer':customer,
+                    'subtotal':PRICES[kit]*quantity, 'shipping':999, 'tax':calculation['tax_amount_exclusive'],
+                    'total':calculation['amount_total'], 'calculation':calculation['id'],
+                    'expires':min(int(time.time()) + 900, calculation['expires_at']), 'policyVersion':checkout_tax.POLICY_VERSION}
+                with connect() as db:
+                    db.execute('INSERT INTO quotes VALUES (?,?,?,?)', (quote_id, session_hash, json.dumps(quote), int(time.time())))
+                return self.reply(200, {**{k:quote[k] for k in ['subtotal','shipping','tax','total','expires','policyVersion']}, 'quoteID':quote_id, 'currency':'USD'}, session)
             if self.path == '/api/paypal/create':
-                kit, color, quantity, total = selection(data)
-                wallet_shipping = None
-                if data.get('flow') in {'applepay','googlepay'}:
-                    wallet_shipping = data.get('shipping', {})
-                    address = wallet_shipping.get('address', {})
-                    if address.get('country_code') not in {'US','CA'} or not address.get('address_line_1') or not address.get('postal_code') or not wallet_shipping.get('name', {}).get('full_name'):
-                        raise ValueError('Valid USA or Canada shipping address required')
-                    if len(json.dumps(wallet_shipping)) > 3000:
-                        raise ValueError('Shipping address too long')
+                if data.get('acceptedTerms') is not True or data.get('policyVersion') != checkout_tax.POLICY_VERSION:
+                    raise ValueError('Please review and accept the checkout terms before paying.')
+                quote_id = data.get('quoteID')
+                if not isinstance(quote_id, str) or not re.fullmatch(r'NQ-[a-f0-9]{48}', quote_id):
+                    raise ValueError('Review your address and calculate your total before paying.')
+                with connect() as db:
+                    stored = db.execute('SELECT payload FROM quotes WHERE id=? AND session=?', (quote_id, session_hash)).fetchone()
+                if not stored:
+                    raise ValueError('Your checkout session expired. Please calculate your total again.')
+                quote = json.loads(stored['payload'])
+                if quote['expires'] < time.time():
+                    raise ValueError('Your total expired. Please calculate it again before paying.')
+                flow = data.get('flow')
+                if flow not in {'venmo','card','paypal','applepay','googlepay'}:
+                    raise ValueError('Choose a supported payment method.')
+                kit, color, quantity, total = (quote[k] for k in ['kit','color','quantity','total'])
+                customer = quote['customer']
                 local_id = 'NE-' + secrets.token_hex(12).upper()
                 with connect() as db:
-                    count = db.execute('SELECT count(*) FROM orders WHERE session=? AND created>?', (session_hash, int(time.time()) - 60)).fetchone()[0]
-                    if count >= 5:
-                        return self.reply(429, {'error': 'Please wait a minute before trying again.'})
-                    db.execute('INSERT INTO orders (id,session,kit,color,quantity,total,state,created) VALUES (?,?,?,?,?,?,?,?)', (local_id, session_hash, kit, color, quantity, total, 'created', int(time.time())))
-                payload = {
-                    'intent': 'CAPTURE',
-                    'purchase_units': [{'custom_id': local_id, 'invoice_id': local_id, 'description': f'Night Eyes {kit} projector / {color}',
-                        'items': [{'name': f'Night Eyes {kit} projector', 'description': color + ' lighting selection', 'quantity': str(quantity), 'category': 'PHYSICAL_GOODS', 'unit_amount': {'currency_code': 'USD', 'value': money(PRICES[kit])}}],
-                        'amount': {'currency_code': 'USD', 'value': money(total), 'breakdown': {'item_total': {'currency_code': 'USD', 'value': money(total - 999)}, 'shipping': {'currency_code': 'USD', 'value': '9.99'}}}}],
-                    'payment_source': {'paypal': {'experience_context': {'brand_name': 'Night Eyes', 'user_action': 'CONTINUE', 'shipping_preference': 'GET_FROM_FILE', 'return_url': ORIGIN + '/paypal-return.html', 'cancel_url': ORIGIN + '/paypal-return.html?cancelled=1'}}}
-                }
-                if data.get('flow') in {'venmo','card','applepay','googlepay'}:
-                    # The PayPal JS SDK supplies the buyer-selected Venmo source.
-                    payload.pop('payment_source')
-                if wallet_shipping:
-                    payload['purchase_units'][0]['shipping'] = wallet_shipping
+                    db.execute('INSERT OR IGNORE INTO orders (id,session,kit,color,quantity,total,state,created,quote_id,tax,tax_calculation,customer,email,policy_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (local_id,session_hash,kit,color,quantity,total,'created',int(time.time()),quote_id,quote['tax'],quote['calculation'],json.dumps(customer),customer['email'],checkout_tax.POLICY_VERSION))
+                    row = db.execute('SELECT * FROM orders WHERE quote_id=? AND session=?', (quote_id, session_hash)).fetchone()
+                local_id = row['id']
+                if row['paypal_id']:
+                    if row['state'] in {'paid','pending','refunded','partially_refunded','reversed','refund_review'}:
+                        raise ValueError('This order already has a payment. Contact support before paying again.')
+                    return self.reply(200, {'id':row['paypal_id']}, session)
+                payload = {'intent':'CAPTURE',
+                    'application_context': {'brand_name':'Night Eyes', 'shipping_preference':'SET_PROVIDED_ADDRESS', 'user_action':'PAY_NOW'},
+                    'purchase_units':[{'custom_id':local_id, 'invoice_id':local_id,
+                        'description':f'Night Eyes {kit} projector / {color}',
+                        'shipping':checkout_tax.shipping_for(customer),
+                        'items':[{'name':f'Night Eyes {kit} projector', 'description':color + ' lighting selection', 'quantity':str(quantity), 'category':'PHYSICAL_GOODS', 'unit_amount':{'currency_code':'USD','value':money(PRICES[kit])}}],
+                        'amount':{'currency_code':'USD','value':money(total), 'breakdown':{
+                            'item_total':{'currency_code':'USD','value':money(quote['subtotal'])},
+                            'shipping':{'currency_code':'USD','value':'9.99'},
+                            'tax_total':{'currency_code':'USD','value':money(quote['tax'])}}}}]}
                 order = api('/v2/checkout/orders', payload, local_id)
-                if data.get('flow') in {'venmo','card','applepay','googlepay'}:
-                    with connect() as db:
-                        db.execute('UPDATE orders SET paypal_id=? WHERE id=?', (order['id'], local_id))
-                    return self.reply(200, {'id': order['id']}, session)
-                url = next(link['href'] for link in order['links'] if link['rel'] in {'payer-action', 'approve'})
-                parsed = urlparse(url)
-                if parsed.scheme != 'https' or parsed.hostname not in {'www.paypal.com', 'paypal.com'}:
-                    raise ValueError('Unexpected payment destination')
                 with connect() as db:
                     db.execute('UPDATE orders SET paypal_id=? WHERE id=?', (order['id'], local_id))
-                return self.reply(200, {'url': url}, session)
+                return self.reply(200, {'id':order['id']}, session)
             order_id = data.get('orderID', '')
             if not isinstance(order_id, str) or not re.fullmatch('[A-Z0-9]{8,32}', order_id):
                 raise ValueError('Invalid order reference')
@@ -204,7 +254,7 @@ class Handler(BaseHTTPRequestHandler):
             if not row or row['created'] < time.time() - 10800:
                 return self.reply(403, {'error': 'Checkout session expired. Contact support if you already paid.'})
             if self.path == '/api/paypal/review':
-                return self.reply(200, {'status': row['state'], 'reference': row['id'], 'total': money(row['total']), 'kit': row['kit'], 'color': row['color'], 'quantity': row['quantity']})
+                return self.reply(200, {'status': row['state'], 'reference': row['id'], 'total': money(row['total']), 'tax': money(row['tax'] or 0), 'kit': row['kit'], 'color': row['color'], 'quantity': row['quantity']})
             if row['state'] in {'paid', 'refunded', 'reversed', 'partially_refunded'}:
                 return self.reply(200, {'status': row['state'], 'reference': row['id']})
             order = api('/v2/checkout/orders/' + order_id)
@@ -215,8 +265,10 @@ class Handler(BaseHTTPRequestHandler):
                 order = api('/v2/checkout/orders/' + order_id + '/capture', {}, row['id'] + '-capture')
                 state = record_order(row, order)
             return self.reply(200, {'status': state, 'reference': row['id']})
-        except (ValueError, KeyError, StopIteration, TypeError):
-            self.reply(400, {'error': 'Unable to verify checkout. Check your selection and USA/Canada shipping address, or contact support@nighteyes.pro.'})
+        except ValueError as error:
+            self.reply(400, {'error': str(error) if not isinstance(error, json.JSONDecodeError) else 'Invalid checkout request.'})
+        except (KeyError, StopIteration, TypeError):
+            self.reply(400, {'error': 'Unable to verify checkout. Check your details or contact support@nighteyes.pro.'})
         except Exception as error:
             print('PayPal request failed: ' + type(error).__name__ + (' HTTP ' + str(error.code) if isinstance(error, HTTPError) else ''), flush=True)
             self.reply(502, {'error': 'Unable to confirm payment. Try again using this page; contact support if the issue persists.'})
@@ -249,4 +301,5 @@ if __name__ == '__main__':
     os.umask(0o077)
     initialize()
     threading.Thread(target=bootstrap, daemon=True).start()
+    threading.Thread(target=sync_tax_records, daemon=True).start()
     ThreadingHTTPServer(('127.0.0.1', 3001), Handler).serve_forever()

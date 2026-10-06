@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,follow"><meta name="color-scheme" content="dark">
+  <title>Secure checkout | Night Eyes</title>
+  <link rel="icon" href="/assets/sections/devil-eyes-favicon.svg?v=20261003" type="image/svg+xml">
+  <link rel="stylesheet" href="checkout.css?v=20261006-1">
+  <script src="checkout.js?v=20261006-1" defer></script>
+</head><body>
+  <a class="skip-link" href="#checkout-main">Skip to checkout</a>
+  <header class="checkout-header"><a class="brand" href="/"><img src="assets/sections/devil-eyes-favicon.svg" width="40" height="32" alt="">NIGHT EYES</a><span class="secure-label"><img src="assets/scene/shield-check.svg" width="18" height="18" alt=""> Secure checkout</span><a href="/#series">Back to the kit <span aria-hidden="true">↗</span></a></header>
+  <main id="checkout-main">
+    <div class="intro"><p class="eyebrow">THE FINAL DETAILS</p><h1>Make the night yours.</h1><p>Your kit. Your destination. One clear total.</p></div>
+    <div id="embedded-notice" class="notice" hidden>For secure payment, <a id="external-checkout" target="_blank" rel="noopener noreferrer">open checkout in a new browser tab ↗</a>.</div>
+    <noscript><p class="notice">Please enable JavaScript to calculate your total and pay securely. Need help? Email support@nighteyes.pro.</p></noscript>
+    <div class="checkout-layout">
+      <div class="details-column">
+        <form id="checkout-form">
+          <section class="form-section" aria-labelledby="contact-heading"><div class="section-title"><span class="step" aria-hidden="true">01</span><div><h2 id="contact-heading">Customer information</h2><p>For your order and delivery updates.</p></div></div>
+            <div class="field-grid">
+              <label>First name<input name="firstName" autocomplete="given-name" maxlength="60" required></label>
+              <label>Last name<input name="lastName" autocomplete="family-name" maxlength="60" required></label>
+              <label class="wide">Email address<input name="email" type="email" autocomplete="email" maxlength="254" required aria-describedby="email-help"><small id="email-help">Use an address where we can reach you about this order.</small></label>
+              <label class="wide">Phone <span class="optional">(optional)</span><input name="phone" type="tel" autocomplete="tel" maxlength="30"><small>For delivery questions only. No marketing sign-up.</small></label>
+            </div>
+          </section>
+          <section class="form-section" aria-labelledby="shipping-heading"><div class="section-title"><span class="step" aria-hidden="true">02</span><div><h2 id="shipping-heading">Shipping address</h2><p>We deliver to the United States and Canada.</p></div></div>
+            <div class="field-grid">
+              <label class="wide">Country<select name="country" autocomplete="shipping country" required><option value="US">United States</option><option value="CA">Canada</option></select></label>
+              <label class="wide">Street address<input name="line1" autocomplete="shipping address-line1" maxlength="150" required></label>
+              <label class="wide">Apartment, suite, etc. <span class="optional">(optional)</span><input name="line2" autocomplete="shipping address-line2" maxlength="150"></label>
+              <label class="wide">City<input name="city" autocomplete="shipping address-level2" maxlength="100" required></label>
+              <label><span id="region-label">State</span><select name="state" autocomplete="shipping address-level1" required></select></label>
+              <label><span id="postal-label">ZIP code</span><input name="postal" autocomplete="shipping postal-code" maxlength="12" required></label>
+            </div>
+            <div class="shipping-method"><div><strong>Standard shipping</strong><p>One flat charge per order</p></div><strong>$9.99 <small>USD</small></strong></div>
+            <p class="help-text">Delivery estimates are not yet published. Contact <a href="mailto:support@nighteyes.pro">support@nighteyes.pro</a> before ordering if timing matters.</p>
+            <p class="notice" id="canada-notice" hidden>Canadian orders are charged in USD. Import duties, taxes or carrier clearance fees may be due on delivery and are not included in this checkout total. Your payment provider may apply currency conversion fees.</p>
+            <button class="primary-button" id="calculate-total" type="submit">Review total &amp; continue <span aria-hidden="true">→</span></button>
+            <p id="quote-status" role="status" aria-live="polite" class="help-text">Enter your address to calculate tax. You will review the total before paying.</p>
+          </section>
+        </form>
+        <section class="form-section payment-section" aria-labelledby="payment-heading"><div class="section-title"><span class="step" aria-hidden="true">03</span><div><h2 id="payment-heading">Review &amp; pay</h2><p>Choose the way you like to pay.</p></div></div>
+          <div id="delivery-review" class="delivery-review" hidden><span class="eyebrow">DELIVER TO</span><p id="delivery-summary"></p><button id="edit-details" class="text-button" type="button">Edit customer &amp; shipping details</button></div>
+          <label class="consent"><input id="accept-terms" type="checkbox"><span>I have reviewed my product, shipping address and total. I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms &amp; conditions</a> and <a href="shipping-returns.html" target="_blank" rel="noopener">Shipping &amp; returns policy</a>, and have read the <a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a>.</span></label>
+          <div class="payment-grid" id="payment-options" aria-label="Payment methods">
+            <button class="payment-button venmo" data-method="venmo" type="button" disabled><span>Pay with Venmo<small>Secure payment through PayPal</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button" data-method="card" type="button" disabled><span>Pay with card<small>Debit or credit through PayPal</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button" data-method="applepay" type="button" disabled><span>Apple Pay<small>On supported devices</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button" data-method="googlepay" type="button" disabled><span>Google Pay<small>On supported devices</small></span><span aria-hidden="true">↗</span></button>
+            <button class="payment-button paypal" data-method="paypal" type="button" disabled><span>PayPal<small>Pay with your PayPal account</small></span><span aria-hidden="true">↗</span></button>
+          </div>
+          <div id="provider-buttons" class="provider-buttons" hidden></div>
+          <p id="payment-status" class="help-text" role="status" aria-live="polite">Calculate your total and accept the terms to unlock secure payment options.</p>
+          <p class="payment-note">Payment details are handled by PayPal and your selected wallet. Night Eyes does not collect or store your card number. Availability depends on your device, location and payment account.</p>
+        </section>
+        <section id="order-result" class="form-section" hidden tabindex="-1"><h2 id="result-title">Order status</h2><p id="result-message"></p><p id="result-reference"></p><p>Keep your order reference. For help, email <a href="mailto:support@nighteyes.pro">support@nighteyes.pro</a>.</p><a href="/#series">Back to Night Eyes ↗</a></section>
+      </div>
+      <aside class="order-column" aria-labelledby="order-heading"><div class="order-panel">
+        <div class="order-heading"><h2 id="order-heading">Your Night Eyes kit</h2><span>USD</span></div>
+        <div class="product-portrait"><img id="order-image" src="assets/sections/devil-eye-blue.webp" alt="Electric blue Devil’s Eye projector" width="600" height="600"><span>DEVIL’S EYE / LED PROJECTOR</span></div>
+        <div class="order-controls"><label>Projector kit<select id="order-kit"><option value="single">Single projector · $30.00</option><option value="twin">Twin projector · $35.00</option></select></label><div class="field-grid"><label>Color<select id="order-color"><option value="blue">Electric blue</option><option value="green">Acid green</option><option value="purple">Ultraviolet purple</option><option value="red">Signal red</option></select></label><label>Quantity<select id="order-quantity"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></label></div></div>
+        <p id="kit-specs" class="help-text">55 cm cable · Remote included · 12V</p>
+        <dl class="totals"><div><dt>Product subtotal</dt><dd id="subtotal">$30.00</dd></div><div><dt>Shipping</dt><dd id="shipping-total">$9.99</dd></div><div><dt>Tax collected</dt><dd id="tax-total">Enter address</dd></div><div class="grand-total"><dt id="total-label">Before tax</dt><dd id="grand-total">$39.99</dd></div></dl>
+        <p id="tax-note" class="help-text">The final tax and total appear after your address is reviewed.</p>
+        <div class="order-assurance"><img src="assets/scene/shield-check.svg" width="24" height="24" alt=""><p>One-time purchase.<br>No subscription. No hidden checkout fees.</p></div>
+      </div>
+      <div class="policy-summary"><h3>Before you place your order</h3>
+        <details><summary>Returns &amp; refunds</summary><p>Request a return within 10 business days of delivery. Refunds are processed within 5–10 business days after the returned item is received. Contact support for eligibility, return postage and return instructions before ordering. Mandatory consumer rights still apply.</p></details>
+        <details><summary>Fitment &amp; road-use rules</summary><p>Decorative 12V lighting, not a replacement for required vehicle lighting. Confirm fitment with a qualified installer. Check the laws where you drive before using colored or flashing lighting on public roads. No road-use approval is claimed.</p></details>
+        <details><summary>Delivery &amp; cancellations</summary><p>Delivery dates are not yet published. Ask support for an estimate. If shipment is delayed, applicable cancellation and refund rights remain in force. Contact support promptly to request a cancellation; dispatch status affects what is possible.</p></details>
+        <details><summary>Warranty information</summary><p>The product record lists a one-year warranty. Ask support for the coverage, exclusions and claim procedure before purchase. Statutory rights are unaffected.</p></details>
+        <a class="support-link" href="mailto:support@nighteyes.pro">Questions? support@nighteyes.pro ↗</a>
+      </div></aside>
+    </div>
+  </main>
+  <footer><span>© Night Eyes · Sonnies Technology LLC</span><nav aria-label="Checkout policies"><a href="privacy.html">Privacy</a><a href="terms.html">Terms &amp; conditions</a><a href="shipping-returns.html">Shipping &amp; returns</a></nav></footer>
+</body></html>

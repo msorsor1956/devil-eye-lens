@@ -20,6 +20,7 @@ jobs:
           persist-credentials: false
       - name: Check JavaScript syntax
         run: |
+          node --check checkout.js
           node --check product.js
           node --check paypal-return.js
           node --check privacy.js
@@ -41,7 +42,7 @@ jobs:
           from urllib.request import Request, urlopen
           from urllib.error import HTTPError
           base = 'http://127.0.0.1:8080'
-          cases = [('/', 'GET', 200), ('/privacy.html', 'GET', 200),
+          cases = [('/', 'GET', 200), ('/checkout.html', 'GET', 200), ('/checkout.css', 'GET', 200), ('/privacy.html', 'GET', 200),
                    ('/terms.html', 'GET', 200), ('/shipping-returns.html', 'GET', 200),
                    ('/robots.txt', 'GET', 200), ('/sitemap.xml', 'GET', 200),
                    ('/assets/sections/devil-eyes-favicon.svg', 'GET', 200),

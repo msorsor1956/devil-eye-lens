@@ -34,8 +34,13 @@
 /* Iris layers share the photograph coordinate system at every screen size. */
 .car-eye-left{transform-origin:701px 429px}.car-eye-right{transform-origin:1125px 426px}
 .car-eye-blink{animation:car-eye-blink 6.4s ease-in-out infinite}
-.car-eye-color{animation:car-eye-color 18s ease-in-out infinite}
+.car-eye-color{animation:car-eye-color 24s ease-in-out infinite}
 @keyframes car-eye-blink{0%,36%,42%,74%,80%,100%{transform:scaleY(1)}39%,77%{transform:scaleY(.035)}}
-@keyframes car-eye-color{0%,12%,100%{filter:hue-rotate(0deg)}30%,45%{filter:hue-rotate(-105deg)}64%,80%{filter:hue-rotate(65deg)}}
+@keyframes car-eye-color{0%,10%,100%{filter:hue-rotate(0deg)}23%,37%{filter:hue-rotate(-105deg)}50%,62%{filter:hue-rotate(65deg)}75%,88%{filter:hue-rotate(145deg)}}
 .campaign-hero.is-paused .car-eye-blink,.campaign-hero.is-paused .car-eye-color{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.car-eye-blink,.car-eye-color{animation:none}}
+
+.car-snake-pupil{opacity:0;animation:car-snake-pupil 24s ease-in-out infinite}
+@keyframes car-snake-pupil{0%,17%,43%,100%{opacity:0}23%,37%{opacity:1}}
+.campaign-hero.is-paused .car-snake-pupil{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.car-snake-pupil{animation:none;opacity:0}}

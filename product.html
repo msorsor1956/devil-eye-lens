@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="spatial.css?v=20261005">
     <script src="scene-loader.js?v=20261005" defer></script>
     <script src="depth.js?v=20261005" defer></script>
-    <link rel="stylesheet" href="homepage.css?v=20261006-blinking-eyes">
+    <link rel="stylesheet" href="homepage.css?v=20261006-snake-eyes">
     <script src="homepage.js?v=20261006-campaign" defer></script>
 
     <script src="checkout-config.js?v=20261005-prices" defer></script>
@@ -44,19 +44,20 @@
     <nav id="mobile-navigation" aria-label="Mobile navigation" hidden><a href="#series">Shop Devil’s Eye</a><a href="#construction">Construction</a><a href="#fitment">Fitment</a><a href="#questions">FAQs</a></nav>
     <main>
             <section class="campaign-hero" id="projector-story" aria-labelledby="hero-title">
-        <svg class="campaign-image campaign-car" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Black custom SUV with blinking eyes cycling through blue, green and purple">
+        <svg class="campaign-image campaign-car" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Black custom SUV with blinking eyes cycling through blue, green snake eyes, purple and red">
           <defs>
+            <radialGradient id="snake-iris"><stop offset="0" stop-color="#c6ff72"/><stop offset=".55" stop-color="#4dc646"/><stop offset="1" stop-color="#08752e"/></radialGradient>
             <clipPath id="car-eye-left"><ellipse cx="701" cy="429" rx="34" ry="40"/></clipPath>
             <clipPath id="car-eye-right"><ellipse cx="1125" cy="426" rx="47" ry="42"/></clipPath>
           </defs>
           <image href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/>
           <g clip-path="url(#car-eye-left)">
             <ellipse cx="701" cy="429" rx="35" ry="41" fill="#050b13"/>
-            <g class="car-eye-blink car-eye-left"><image clip-path="url(#car-eye-left)" class="car-eye-color" href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/></g>
+            <g class="car-eye-blink car-eye-left"><image clip-path="url(#car-eye-left)" class="car-eye-color" href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/><g class="car-snake-pupil"><ellipse cx="701" cy="429" rx="18" ry="23" fill="url(#snake-iris)"/><path d="M 701 396 Q 690 429 701 462 Q 712 429 701 396Z" fill="#010805"/><ellipse cx="707" cy="417" rx="2" ry="4" fill="#ddffc2" opacity=".65"/></g></g>
           </g>
           <g clip-path="url(#car-eye-right)">
             <ellipse cx="1125" cy="426" rx="48" ry="43" fill="#050b13"/>
-            <g class="car-eye-blink car-eye-right"><image clip-path="url(#car-eye-right)" class="car-eye-color" href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/></g>
+            <g class="car-eye-blink car-eye-right"><image clip-path="url(#car-eye-right)" class="car-eye-color" href="assets/sections/night-eyes-campaign.webp" width="1672" height="941"/><g class="car-snake-pupil"><ellipse cx="1125" cy="426" rx="22" ry="23" fill="url(#snake-iris)"/><path d="M 1125 393 Q 1114 426 1125 459 Q 1136 426 1125 393Z" fill="#010805"/><ellipse cx="1131" cy="414" rx="2" ry="4" fill="#ddffc2" opacity=".65"/></g></g>
           </g>
         </svg>
         <div class="campaign-shade" aria-hidden="true"></div>

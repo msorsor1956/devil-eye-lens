@@ -33,3 +33,6 @@
 [data-theme=light] .mood-options label{color:#536174}
 /* Cinematic imagery and branded payment buttons retain their own contrast. */
 @media(max-width:600px){.mood-panel{right:12px;bottom:12px}.mood-panel summary{padding:10px 13px}.mood-options{width:205px}}
+[data-theme=light] .order-panel,[data-theme=light] .delivery-review,[data-theme=light] .provider-buttons{background:#e5edf5;color:#14283c;border-color:#b8c8d8;box-shadow:0 12px 30px #14283c12}
+[data-theme=light] .availability-note,[data-theme=light] .construction-copy h2 span{color:#536174}
+[data-theme=light] .kit-picker select{background:#fff;color:#14283c}
